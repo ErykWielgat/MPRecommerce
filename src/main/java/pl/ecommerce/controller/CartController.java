@@ -5,6 +5,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import pl.ecommerce.service.CartService;
 
 @Controller
@@ -23,9 +24,17 @@ public class CartController {
 
     // Dodawanie produktu (i powrót na stronę, z której przyszliśmy - to trochę trudniejsze, więc zrobimy proste przekierowanie do koszyka)
     @GetMapping("/cart/add/{productId}")
-    public String addToCart(@PathVariable Long productId) {
+    public String addToCart(@PathVariable Long productId,
+                            @RequestHeader(value = "Referer", required = false) String referer,
+                            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+
         cartService.addProductToCart(productId);
-        return "redirect:/cart"; // Po dodaniu idziemy od razu do koszyka
+        // Ten komunikat "przeżyje" jedno przekierowanie i wyświetli się na stronie
+        redirectAttributes.addFlashAttribute("successMessage", "Dodano produkt do koszyka!");
+        if (referer != null) {
+            return "redirect:" + referer;
+        }
+        return "redirect:/";
     }
 
     // Usuwanie produktu

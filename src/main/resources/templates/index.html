@@ -72,7 +72,9 @@
                 <div class="col-md-3 mb-4" th:each="product : ${products}">
                     <div class="card h-100 shadow-sm border-0">
                         <img th:src="${product.imageUrl != null ? product.imageUrl : 'https://via.placeholder.com/300'}"
-                             class="card-img-top" alt="Zdjęcie" style="height: 180px; object-fit: cover;">
+                             class="card-img-top"
+                             alt="Zdjęcie"
+                             style="height: 180px; object-fit: contain; padding: 10px;">
 
                         <div class="card-body p-3">
                             <h6 class="card-title text-truncate" th:text="${product.name}">Nazwa</h6>
