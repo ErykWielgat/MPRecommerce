@@ -26,4 +26,15 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // JPQL to taki SQL, ale operujący na obiektach (p to Product)
     @Query("SELECT p FROM Product p WHERE p.price BETWEEN :minPrice AND :maxPrice")
     List<Product> findProductsInPriceRange(@Param("minPrice") BigDecimal min, @Param("maxPrice") BigDecimal max);
+    // Filtrowanie z opcjonalnymi parametrami i sortowaniem
+    @Query("SELECT p FROM Product p WHERE " +
+            "(:categoryId IS NULL OR p.category.id = :categoryId) AND " +
+            "(:minPrice IS NULL OR p.price >= :minPrice) AND " +
+            "(:maxPrice IS NULL OR p.price <= :maxPrice) AND " +
+            "(:name IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%')))")
+    List<Product> searchProducts(@Param("categoryId") Long categoryId,
+                                 @Param("minPrice") BigDecimal minPrice,
+                                 @Param("maxPrice") BigDecimal maxPrice,
+                                 @Param("name") String name,
+                                 org.springframework.data.domain.Sort sort);
 }

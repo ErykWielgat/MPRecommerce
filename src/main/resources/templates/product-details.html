@@ -33,7 +33,7 @@
             <p class="lead" th:text="${product.description}">Opis produktu...</p>
 
             <hr>
-            <button class="btn btn-success btn-lg w-100">Dodaj do koszyka</button>
+            <a th:href="@{'/cart/add/' + ${product.id}}" class="btn btn-success btn-lg w-100">Dodaj do koszyka</a>
         </div>
     </div>
 
