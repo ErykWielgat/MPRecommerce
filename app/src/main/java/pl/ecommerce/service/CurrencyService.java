@@ -1,13 +1,14 @@
 package pl.ecommerce.service;
 
 import lombok.RequiredArgsConstructor;
-import pl.ecommerce.nbp.NbpClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.ecommerce.model.CurrencyRate;
+import pl.ecommerce.nbp.NbpClient;
 import pl.ecommerce.nbp.NbpRateDto;
 import pl.ecommerce.repository.CurrencyRepository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -16,34 +17,42 @@ import java.util.List;
 public class CurrencyService {
 
     private final CurrencyRepository currencyRepository;
-    private final NbpClient nbpClient; // Wstrzykujemy klienta z modułu obok
+    private final NbpClient nbpClient;
+
+    // --- METODA 1: Pobiera kursy z NBP i zapisuje do bazy ---
     @Transactional
     public void updateRates() {
-        // 1. Używamy modułu zewnętrznego do pobrania danych
-        System.out.println("Łączenie z NBP...");
-        List<NbpRateDto> ratesFromInternet = nbpClient.getOfficialRates();
+        List<NbpRateDto> rates = nbpClient.getOfficialRates();
+        if (rates.isEmpty()) return;
 
-        if (ratesFromInternet.isEmpty()) {
-            System.out.println("NBP nie odpowiedział lub brak danych.");
-            return;
-        }
-
-        // 2. Czyścimy stare kursy w bazie (żeby nie dublować)
+        // Usuwamy stare, żeby nie robić śmietnika
         currencyRepository.deleteAll();
 
-        // 3. Przepisujemy DTO (z modułu) na naszą Encję (do bazy)
-        for (NbpRateDto dto : ratesFromInternet) {
+        for (NbpRateDto dto : rates) {
             CurrencyRate rate = new CurrencyRate();
             rate.setCurrencyCode(dto.getCode());
             rate.setRate(dto.getRate());
             rate.setFetchDate(LocalDate.now());
-
             currencyRepository.save(rate);
         }
-        System.out.println("Zapisano " + ratesFromInternet.size() + " kursów walut.");
     }
 
-    public List<CurrencyRate> getAllRates() {
-        return currencyRepository.findAll();
+    // --- METODA 2: Zwraca jeden konkretny kurs (bezpiecznie) ---
+    // Tego Ci brakowało do wyświetlania na stronie głównej!
+    public BigDecimal getRate(String currencyCode) {
+        return currencyRepository.findByCurrencyCode(currencyCode)
+                .map(rate -> BigDecimal.valueOf(rate.getRate())) // Zamiana double na BigDecimal
+                .orElse(BigDecimal.ZERO); // Jak nie znajdzie, zwraca 0 (żeby nie było błędu)
+    }
+
+    // --- METODA 3: Sprawdza czy trzeba odświeżyć (dla SessionListenera) ---
+    @Transactional
+    public void checkAndRefreshRates() {
+        boolean isUpdatedToday = currencyRepository.findAll().stream()
+                .anyMatch(r -> r.getFetchDate().equals(LocalDate.now()));
+
+        if (!isUpdatedToday) {
+            updateRates(); // Wywołujemy metodę nr 1
+        }
     }
 }

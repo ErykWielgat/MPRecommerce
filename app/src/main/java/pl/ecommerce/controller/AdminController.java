@@ -23,7 +23,8 @@ public class AdminController {
     private final CategoryService categoryService;
     private final ReviewRepository reviewRepository;
     private final ImageService imageService;
-    private final pl.ecommerce.service.CurrencyService currencyService;
+
+    // USUNIĘTO: CurrencyService - admin nie musi już tym zarządzać ręcznie
 
     // 1. Dashboard (Lista produktów)
     @GetMapping
@@ -75,6 +76,7 @@ public class AdminController {
         reviewRepository.deleteById(id);
         return "redirect:/admin/reviews";
     }
+
     // --- EDYCJA PRODUKTU ---
     @GetMapping("/products/edit/{id}")
     public String showEditForm(@PathVariable Long id, Model model) {
@@ -112,17 +114,6 @@ public class AdminController {
         // Po usunięciu wracamy na stronę TEGO SAMEGO produktu
         return "redirect:/admin/product/" + productId;
     }
-    // Widok listy walut
-    @GetMapping("/currencies")
-    public String showCurrencies(Model model) {
-        model.addAttribute("rates", currencyService.getAllRates());
-        return "admin/currencies";
-    }
 
-    // Akcja: Pobierz dane z NBP
-    @PostMapping("/currencies/update")
-    public String updateCurrencies() {
-        currencyService.updateRates();
-        return "redirect:/admin/currencies";
-    }
+    // USUNIĘTO: Metody currencies (show i update)
 }
