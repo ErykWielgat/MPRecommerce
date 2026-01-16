@@ -1,4 +1,4 @@
-package pl.currencyclient;
+package pl.ecommerce.currencyclient;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
