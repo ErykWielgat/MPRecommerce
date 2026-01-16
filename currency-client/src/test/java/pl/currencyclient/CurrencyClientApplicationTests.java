@@ -1,4 +1,4 @@
-package pl.example.currencyclient;
+package pl.currencyclient;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
