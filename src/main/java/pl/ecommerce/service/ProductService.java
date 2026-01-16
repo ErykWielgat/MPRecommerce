@@ -39,24 +39,37 @@ public class ProductService {
     }
 
     // Tworzenie produktu (Modyfikacja danych wymaga @Transactional)
+    // Metoda obsługująca zarówno TWORZENIE (id null) jak i EDYCJĘ (id istnieje)
     @Transactional
     public ProductDto createProduct(ProductDto productDto) {
-        // 1. Szukamy kategorii, do której ma trafić produkt
-        Category category = categoryRepository.findById(productDto.getCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Kategoria nie istnieje: " + productDto.getCategoryId()));
+        Product product;
 
-        // 2. Tworzymy encję na podstawie DTO
-        Product product = new Product();
+        // Sprawdzamy, czy to edycja (czy DTO ma ID)
+        if (productDto.getId() != null) {
+            // EDYCJA: Pobieramy istniejący produkt
+            product = productRepository.findById(productDto.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Produkt nie istnieje"));
+        } else {
+            // NOWY: Tworzymy nowy obiekt
+            product = new Product();
+        }
+
+        // Aktualizujemy pola
         product.setName(productDto.getName());
         product.setDescription(productDto.getDescription());
         product.setPrice(productDto.getPrice());
-        product.setImageUrl(productDto.getImageUrl());
-        product.setCategory(category); // Przypisujemy relację!
 
-        // 3. Zapisujemy w bazie
+        // Aktualizujemy zdjęcie tylko jeśli przesłano nowy link/plik (żeby nie nadpisać puste)
+        if (productDto.getImageUrl() != null && !productDto.getImageUrl().isEmpty()) {
+            product.setImageUrl(productDto.getImageUrl());
+        }
+
+        // Kategoria
+        Category category = categoryRepository.findById(productDto.getCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Kategoria nie istnieje"));
+        product.setCategory(category);
+
         Product savedProduct = productRepository.save(product);
-
-        // 4. Zwracamy zapisany obiekt jako DTO
         return mapToDto(savedProduct);
     }
 

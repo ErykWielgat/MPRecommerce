@@ -74,4 +74,41 @@ public class AdminController {
         reviewRepository.deleteById(id);
         return "redirect:/admin/reviews";
     }
+    // --- EDYCJA PRODUKTU ---
+    @GetMapping("/products/edit/{id}")
+    public String showEditForm(@PathVariable Long id, Model model) {
+        // 1. Pobieramy encję
+        Product product = productService.getProductEntity(id);
+
+        // 2. Mapujemy ręcznie na DTO, żeby formularz się wypełnił
+        ProductDto dto = new ProductDto();
+        dto.setId(product.getId());
+        dto.setName(product.getName());
+        dto.setDescription(product.getDescription());
+        dto.setPrice(product.getPrice());
+        dto.setCategoryId(product.getCategory().getId());
+        dto.setImageUrl(product.getImageUrl());
+
+        model.addAttribute("productDto", dto);
+        model.addAttribute("categories", categoryService.getAllCategories());
+
+        // Używamy tego samego formularza co do dodawania
+        return "admin/product-form";
+    }
+
+    // --- SZCZEGÓŁY DLA ADMINA (Z USUWANIEM OPINII) ---
+    @GetMapping("/product/{id}")
+    public String adminProductDetails(@PathVariable Long id, Model model) {
+        Product product = productService.getProductEntity(id);
+        model.addAttribute("product", product);
+        return "admin/product-details"; // Nowy widok specjalnie dla admina
+    }
+
+    // Metoda do usuwania opinii z poziomu widoku produktu
+    @GetMapping("/product/{productId}/delete-review/{reviewId}")
+    public String deleteReviewFromProduct(@PathVariable Long productId, @PathVariable Long reviewId) {
+        reviewRepository.deleteById(reviewId);
+        // Po usunięciu wracamy na stronę TEGO SAMEGO produktu
+        return "redirect:/admin/product/" + productId;
+    }
 }

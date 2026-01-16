@@ -9,10 +9,9 @@
 
 <div class="container mt-5">
     <div class="col-md-6 offset-md-3 bg-white p-4 rounded shadow">
-        <h3>Nowy Produkt</h3>
-
+        <h3 th:text="${productDto.id == null ? 'Nowy Produkt' : 'Edycja Produktu'}">Produkt</h3>
         <form action="/admin/products/save" method="post" enctype="multipart/form-data">
-
+            <input type="hidden" name="id" th:field="${productDto.id}">
             <div class="mb-3">
                 <label>Nazwa</label>
                 <input type="text" name="name" class="form-control" required>

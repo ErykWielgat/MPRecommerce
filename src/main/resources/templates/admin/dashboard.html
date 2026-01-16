@@ -43,9 +43,12 @@
             <td th:text="${p.name}">Nazwa</td>
             <td th:text="${p.price}">100</td>
             <td>
+                <a th:href="@{'/admin/product/' + ${p.id}}" class="btn btn-info btn-sm text-white">Opinie / Szczegóły</a>
+
+
                 <a th:href="@{'/admin/products/delete/' + ${p.id}}"
                    class="btn btn-danger btn-sm"
-                   onclick="return confirm('Na pewno usunąć?');">Usuń</a>
+                   onclick="return confirm('Na pewno usunąć produkt?');">Usuń</a>
             </td>
         </tr>
         </tbody>
