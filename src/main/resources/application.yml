@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/ecommerce_db?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: # Zostaw puste je?li masz domy?lny XAMPP, w przeciwnym razie wpisz has?o
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: update # Automatycznie aktualizuje schemat bazy na podstawie klas Java
+    show-sql: true # Poka?e nam zapytania SQL w konsoli (przydatne do nauki)
+    properties:
+      hibernate:
+        format_sql: true # Sformatuje te zapytania ?adnie
+
+  thymeleaf:
+    cache: false # Wy??cza cache widoków (?eby? widzia? zmiany w HTML po od?wie?eniu strony bez restartu)
+    prefix: classpath:/templates/
+    suffix: .html
+
+server:
+  port: 8080
