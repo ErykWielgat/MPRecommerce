@@ -6,13 +6,16 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>4.0.1</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <relativePath/>
     </parent>
     <groupId>pl.example</groupId>
     <artifactId>ecommerce-platform</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>ecommerce-platform</name>
     <description>ecommerce-platform</description>
+      <modules>
+        <module>currency-client</module>
+    </modules>
     <url/>
     <licenses>
         <license/>
