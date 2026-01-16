@@ -34,4 +34,6 @@ public class Product {
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false) // 9. W tabeli produktów powstanie kolumna 'category_id'
     private Category category;
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<Review> reviews = new java.util.ArrayList<>();
 }
