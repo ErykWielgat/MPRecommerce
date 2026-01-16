@@ -1,0 +1,63 @@
+/* --- Ogólne --- */
+body {
+    background-color: #f8f9fa; /* Odpowiednik klasy .bg-light */
+}
+
+/* --- Pasek Walut (Nowoczesny) --- */
+.currency-bar {
+    background-color: #2c3e50; /* Ciemny, elegancki kolor */
+    color: white;
+    padding: 10px 0;
+    display: flex;
+    justify-content: center; /* Wyśrodkowanie */
+    align-items: center;
+    gap: 30px; /* Odstęp między walutami */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    margin-bottom: 20px;
+}
+
+.currency-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.currency-flag {
+    width: 24px;
+    height: 16px;
+    border-radius: 2px;
+    box-shadow: 0 0 2px rgba(255,255,255,0.5);
+}
+
+.currency-code {
+    font-weight: bold;
+    color: #bdc3c7;
+}
+
+.currency-value {
+    font-weight: bold;
+    color: #2ecc71; /* Zielony kolor dla ceny */
+}
+
+/* --- Panel boczny (Filtrowanie) --- */
+.sidebar-container {
+    height: fit-content;
+    font-size: 0.9rem;
+}
+
+/* --- Karty Produktów --- */
+.product-card-img {
+    height: 180px;
+    object-fit: contain;
+    padding: 10px;
+}
+
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px); /* Lekkie uniesienie po najechaniu */
+}

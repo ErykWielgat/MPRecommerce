@@ -4,18 +4,43 @@
     <meta charset="UTF-8">
     <title>Sklep Internetowy</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
-<body class="bg-light">
-<div style="background-color: #f1f1f1; padding: 5px 15px; text-align: right; font-size: 0.9em; border-bottom: 1px solid #ccc;">
-    <strong>Kursy walut (NBP):</strong>
-    <span style="color: green; margin-left: 10px;">USD: <span th:text="${#numbers.formatDecimal(usdRate, 1, 2)}">0.00</span> zł</span>
-    <span style="color: blue; margin-left: 10px;">EUR: <span th:text="${#numbers.formatDecimal(eurRate, 1, 2)}">0.00</span> zł</span>
+<body>
+
+<div class="currency-bar">
+    <div class="currency-item">
+        <img src="https://flagcdn.com/w40/us.png" alt="USA" class="currency-flag">
+        <span class="currency-code">USD:</span>
+        <span class="currency-value" th:text="${#numbers.formatDecimal(usdRate, 1, 2)} + ' zł'">0.00 zł</span>
+    </div>
+
+    <div class="currency-item">
+        <img src="https://flagcdn.com/w40/eu.png" alt="Europe" class="currency-flag">
+        <span class="currency-code">EUR:</span>
+        <span class="currency-value" th:text="${#numbers.formatDecimal(eurRate, 1, 2)} + ' zł'">0.00 zł</span>
+    </div>
+
+    <div class="currency-item">
+        <img src="https://flagcdn.com/w40/gb.png" alt="UK" class="currency-flag">
+        <span class="currency-code">GBP:</span>
+        <span class="currency-value" th:text="${#numbers.formatDecimal(gbpRate, 1, 2)} + ' zł'">0.00 zł</span>
+    </div>
+
+    <div class="currency-item">
+        <img src="https://flagcdn.com/w40/ch.png" alt="Swiss" class="currency-flag">
+        <span class="currency-code">CHF:</span>
+        <span class="currency-value" th:text="${#numbers.formatDecimal(chfRate, 1, 2)} + ' zł'">0.00 zł</span>
+    </div>
 </div>
+
 <div class="container-fluid mt-4">
     <h1 class="text-center mb-4">Sklep Internetowy</h1>
 
     <div class="row">
-        <div class="col-md-2 p-3 bg-white rounded shadow-sm ms-3" style="height: fit-content; font-size: 0.9rem;">
+        <div class="col-md-2 p-3 bg-white rounded shadow-sm ms-3 sidebar-container">
             <h5 class="mb-3">Filtrowanie</h5>
             <form action="/" method="get">
 
@@ -81,9 +106,8 @@
                 <div class="col-md-3 mb-4" th:each="product : ${products}">
                     <div class="card h-100 shadow-sm border-0">
                         <img th:src="${product.imageUrl != null ? product.imageUrl : 'https://via.placeholder.com/300'}"
-                             class="card-img-top"
-                             alt="Zdjęcie"
-                             style="height: 180px; object-fit: contain; padding: 10px;">
+                             class="card-img-top product-card-img"
+                             alt="Zdjęcie">
 
                         <div class="card-body p-3">
                             <h6 class="card-title text-truncate" th:text="${product.name}">Nazwa</h6>
@@ -94,7 +118,7 @@
 
                         <div class="card-footer bg-white border-top-0 d-flex justify-content-between p-3">
                             <a th:href="@{'/product/' + ${product.id}}" class="btn btn-outline-primary btn-sm">Podgląd</a>
-                            <a th:href="@{'/cart/add/' + ${product.id}}" class="btn btn-success btn-sm">Dodaj do koszyka</a>
+                            <a th:href="@{'/cart/add/' + ${product.id}}" class="btn btn-success btn-sm">Dodaj</a>
                         </div>
                     </div>
                 </div>

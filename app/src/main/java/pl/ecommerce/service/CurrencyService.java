@@ -45,14 +45,35 @@ public class CurrencyService {
                 .orElse(BigDecimal.ZERO); // Jak nie znajdzie, zwraca 0 (żeby nie było błędu)
     }
 
-    // --- METODA 3: Sprawdza czy trzeba odświeżyć (dla SessionListenera) ---
+    // --- METODA 3: Sprawdza czy trzeba odświeżyć (Inteligentna) ---
     @Transactional
     public void checkAndRefreshRates() {
-        boolean isUpdatedToday = currencyRepository.findAll().stream()
-                .anyMatch(r -> r.getFetchDate().equals(LocalDate.now()));
+        // 1. Pobierz wszystkie dzisiejsze kursy z bazy
+        List<CurrencyRate> todayRates = currencyRepository.findAll().stream()
+                .filter(r -> r.getFetchDate().equals(LocalDate.now()))
+                .toList();
 
-        if (!isUpdatedToday) {
-            updateRates(); // Wywołujemy metodę nr 1
+        // 2. Sprawdź, czy mamy te, na których nam zależy
+        boolean hasUsd = todayRates.stream().anyMatch(r -> r.getCurrencyCode().equals("USD"));
+        boolean hasEur = todayRates.stream().anyMatch(r -> r.getCurrencyCode().equals("EUR"));
+        boolean hasGbp = todayRates.stream().anyMatch(r -> r.getCurrencyCode().equals("GBP"));
+        boolean hasChf = todayRates.stream().anyMatch(r -> r.getCurrencyCode().equals("CHF"));
+
+        if (!hasUsd || !hasEur || !hasGbp || !hasChf) {
+            updateRates();
         }
+    }
+    public BigDecimal calculatePriceInCurrency(BigDecimal priceInPln, String targetCurrencyCode) {
+        if ("PLN".equalsIgnoreCase(targetCurrencyCode)) {
+            return priceInPln;
+        }
+
+        BigDecimal rate = getRate(targetCurrencyCode);
+
+        if (rate.compareTo(BigDecimal.ZERO) == 0) {
+            return priceInPln;
+        }
+
+        return priceInPln.divide(rate, 2, java.math.RoundingMode.HALF_UP);
     }
 }

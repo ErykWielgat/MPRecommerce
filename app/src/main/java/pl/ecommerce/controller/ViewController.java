@@ -17,6 +17,7 @@ public class ViewController {
     private final ProductService productService;
     private final CategoryService categoryService;
     private final CurrencyService currencyService;
+
     @GetMapping("/")
     public String home(Model model,
                        @org.springframework.web.bind.annotation.RequestParam(required = false) Long categoryId,
@@ -38,19 +39,22 @@ public class ViewController {
         model.addAttribute("paramSort", sort);
         model.addAttribute("paramDir", dir);
 
-        // --- 2. NOWE: Pobieramy kursy walut ---
-        // Używamy metody getRate, którą przed chwilą dodaliśmy do serwisu
+        // --- 2. NOWE: Pobieramy 4 waluty ---
         BigDecimal usdRate = currencyService.getRate("USD");
         BigDecimal eurRate = currencyService.getRate("EUR");
+        BigDecimal gbpRate = currencyService.getRate("GBP"); // <--- Funt
+        BigDecimal chfRate = currencyService.getRate("CHF"); // <--- Frank Szwajcarski
 
-        // Przekazujemy do HTML
+        // Przekazujemy do HTML (muszą mieć dokładnie takie nazwy jak w pliku .html)
         model.addAttribute("usdRate", usdRate);
         model.addAttribute("eurRate", eurRate);
+        model.addAttribute("gbpRate", gbpRate);
+        model.addAttribute("chfRate", chfRate);
 
         return "index";
     }
 
-    // --- Reszta pliku bez zmian (productDetails, addReview) ---
+    // --- Reszta pliku bez zmian ---
     @GetMapping("/product/{id}")
     public String productDetails(@org.springframework.web.bind.annotation.PathVariable Long id, Model model) {
         pl.ecommerce.model.Product product = productService.getProductEntity(id);
