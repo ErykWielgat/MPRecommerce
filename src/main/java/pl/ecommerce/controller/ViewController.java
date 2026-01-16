@@ -25,4 +25,32 @@ public class ViewController {
         // 3. Zwracamy nazwę pliku HTML (bez .html), który ma się wyświetlić
         return "index";
     }
+    // 1. Wyświetlanie strony szczegółów
+    @GetMapping("/product/{id}")
+    public String productDetails(@org.springframework.web.bind.annotation.PathVariable Long id, Model model) {
+        pl.ecommerce.model.Product product = productService.getProductEntity(id);
+        model.addAttribute("product", product);
+
+        // Obliczanie średniej oceny
+        double averageRating = product.getReviews().stream()
+                .mapToInt(pl.ecommerce.model.Review::getRating)
+                .average()
+                .orElse(0.0);
+        model.addAttribute("averageRating", String.format("%.1f", averageRating));
+
+        return "product-details";
+    }
+
+    // 2. Obsługa formularza dodawania opinii
+    @org.springframework.web.bind.annotation.PostMapping("/product/{id}/review")
+    public String addReview(@org.springframework.web.bind.annotation.PathVariable Long id,
+                            @org.springframework.web.bind.annotation.RequestParam String author,
+                            @org.springframework.web.bind.annotation.RequestParam String content,
+                            @org.springframework.web.bind.annotation.RequestParam int rating) {
+
+        productService.addReview(id, author, content, rating);
+
+        // Po dodaniu przekieruj z powrotem na stronę produktu
+        return "redirect:/product/" + id;
+    }
 }

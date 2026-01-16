@@ -7,6 +7,7 @@ import pl.ecommerce.dto.ProductDto;
 import pl.ecommerce.exception.ResourceNotFoundException;
 import pl.ecommerce.model.Category;
 import pl.ecommerce.model.Product;
+import pl.ecommerce.model.Review;
 import pl.ecommerce.repository.CategoryRepository;
 import pl.ecommerce.repository.ProductRepository;
 
@@ -19,6 +20,7 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final pl.ecommerce.repository.ReviewRepository reviewRepository;
 
     // Pobieranie wszystkich produktów
     public List<ProductDto> getAllProducts() {
@@ -67,5 +69,27 @@ public class ProductService {
         dto.setImageUrl(product.getImageUrl());
         dto.setCategoryId(product.getCategory().getId()); // Wyciągamy ID z obiektu kategorii
         return dto;
+    }
+    // Metoda do dodawania opinii
+    @Transactional
+    public void addReview(Long productId, String author, String content, int rating) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Produkt nie istnieje"));
+
+        Review review = new Review();
+        review.setAuthorName(author);
+        review.setContent(content);
+        review.setRating(rating);
+        review.setProduct(product);
+
+        reviewRepository.save(review);
+    }
+
+    // Metoda pomocnicza: Pobiera "surowy" produkt (encję) dla widoku szczegółów
+    // (Wcześniej mieliśmy tylko DTO, ale do widoku Thymeleaf wygodniej czasem wziąć encję,
+    // żeby mieć łatwy dostęp do listy opinii, chociaż profesjonalnie powinno się mapować wszystko na DTO)
+    public Product getProductEntity(Long id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Nie znaleziono produktu"));
     }
 }

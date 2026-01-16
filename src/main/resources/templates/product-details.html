@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${product.name}">Szczegóły produktu</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body class="bg-light">
+
+<div class="container mt-5">
+    <a href="/" class="btn btn-outline-secondary mb-3">&larr; Powrót do sklepu</a>
+
+    <div class="row">
+        <div class="col-md-6">
+            <img th:src="${product.imageUrl != null ? product.imageUrl : 'https://via.placeholder.com/500'}"
+                 class="img-fluid rounded shadow-sm" alt="Zdjęcie">
+        </div>
+
+        <div class="col-md-6">
+            <h1 th:text="${product.name}">Nazwa</h1>
+            <h2 class="text-primary my-3">
+                <span th:text="${product.price}">0.00</span> PLN
+            </h2>
+
+            <div class="mb-3">
+                <span class="badge bg-warning text-dark fs-6">
+                    <i class="bi bi-star-fill"></i> <span th:text="${averageRating}">0.0</span> / 5.0
+                </span>
+                <span class="text-muted ms-2" th:text="'(' + ${product.reviews.size()} + ' opinii)'"></span>
+            </div>
+
+            <p class="lead" th:text="${product.description}">Opis produktu...</p>
+
+            <hr>
+            <button class="btn btn-success btn-lg w-100">Dodaj do koszyka</button>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3>Opinie klientów</h3>
+
+            <div class="card mb-4 bg-white shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Dodaj swoją opinię</h5>
+                    <form th:action="@{'/product/' + ${product.id} + '/review'}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Twoje imię</label>
+                            <input type="text" name="author" class="form-control" required placeholder="Jan Kowalski">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Ocena</label>
+                            <select name="rating" class="form-select">
+                                <option value="5">⭐⭐⭐⭐⭐ (5/5)</option>
+                                <option value="4">⭐⭐⭐⭐ (4/5)</option>
+                                <option value="3">⭐⭐⭐ (3/5)</option>
+                                <option value="2">⭐⭐ (2/5)</option>
+                                <option value="1">⭐ (1/5)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Treść</label>
+                            <textarea name="content" class="form-control" rows="3" required placeholder="Co sądzisz o produkcie?"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Wyślij opinię</button>
+                    </form>
+                </div>
+            </div>
+
+            <div th:if="${product.reviews.isEmpty()}" class="alert alert-info">
+                Brak opinii. Bądź pierwszy!
+            </div>
+
+            <div th:each="review : ${product.reviews}" class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <h5 class="card-title" th:text="${review.authorName}">Autor</h5>
+                        <span class="text-warning">
+                            <i class="bi bi-star-fill" th:each="i : ${#numbers.sequence(1, review.rating)}"></i>
+                        </span>
+                    </div>
+                    <p class="card-text" th:text="${review.content}">Treść opinii...</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

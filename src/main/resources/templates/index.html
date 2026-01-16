@@ -31,8 +31,7 @@
                 </div>
 
                 <div class="card-footer bg-white border-top-0 d-flex justify-content-between">
-                    <button class="btn btn-outline-primary btn-sm">Szczegóły</button>
-                    <button class="btn btn-warning btn-sm">Do koszyka</button>
+                    <a th:href="@{'/product/' + ${product.id}}" class="btn btn-outline-primary btn-sm">Szczegóły</a>                    <button class="btn btn-warning btn-sm">Do koszyka</button>
                 </div>
             </div>
         </div>
