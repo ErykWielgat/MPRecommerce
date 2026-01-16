@@ -16,6 +16,7 @@ import java.util.List;
 public class ProductController {
 
     private final ProductService productService;
+    private final pl.ecommerce.dao.ProductJdbcDao productJdbcDao;
 
     // GET http://localhost:8080/api/v1/products
     @GetMapping
@@ -36,5 +37,22 @@ public class ProductController {
         // @RequestBody bierze JSON-a z żądania i zamienia na obiekt Java
         ProductDto createdProduct = productService.createProduct(productDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdProduct);
+    }
+    // Endpoint do testowania JdbcTemplate (SELECT)
+    // GET /api/v1/products/expensive?minPrice=1000
+    @GetMapping("/expensive")
+    public ResponseEntity<List<pl.ecommerce.dto.ProductPriceSummary>> getExpensiveProducts(
+            @RequestParam java.math.BigDecimal minPrice) {
+        return ResponseEntity.ok(productJdbcDao.findProductsMoreExpensiveThan(minPrice));
+    }
+
+    // Endpoint do testowania JdbcTemplate (UPDATE)
+    // PUT /api/v1/products/bulk-update?categoryId=1&amount=500
+    @PutMapping("/bulk-update")
+    public ResponseEntity<String> updatePrices(
+            @RequestParam Long categoryId,
+            @RequestParam java.math.BigDecimal amount) {
+        int updatedRows = productJdbcDao.updatePriceByCategory(categoryId, amount);
+        return ResponseEntity.ok("Zaktualizowano cen produktów: " + updatedRows);
     }
 }
