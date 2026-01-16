@@ -63,4 +63,51 @@ public class CartService {
                 .map(CartItem::getTotalPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
+    private final pl.ecommerce.repository.OrderRepository orderRepository;
+
+    // Metoda zapisująca zamówienie
+    public void saveOrder(pl.ecommerce.dto.OrderDto orderDto) {
+        pl.ecommerce.model.Order order = new pl.ecommerce.model.Order();
+
+        // Przepisanie danych adresowych
+        order.setFirstName(orderDto.getFirstName());
+        order.setLastName(orderDto.getLastName());
+        order.setEmail(orderDto.getEmail());
+        order.setAddress(orderDto.getAddress());
+        order.setZipCode(orderDto.getZipCode());
+        order.setCity(orderDto.getCity());
+        order.setDeliveryMethod(orderDto.getDeliveryMethod());
+
+        // Logika kosztów dostawy
+        BigDecimal deliveryCost = BigDecimal.ZERO;
+        if ("KURIER".equals(orderDto.getDeliveryMethod())) {
+            deliveryCost = new BigDecimal("20.00");
+        } else if ("PACZKOMAT".equals(orderDto.getDeliveryMethod())) {
+            deliveryCost = new BigDecimal("10.00");
+        }
+        order.setDeliveryCost(deliveryCost);
+
+        // Suma całkowita (produkty + dostawa)
+        BigDecimal productsTotal = getTotalSum();
+        order.setTotalAmount(productsTotal.add(deliveryCost));
+
+        // Przepisanie produktów z koszyka do encji OrderItem
+        List<pl.ecommerce.model.OrderItem> items = new ArrayList<>();
+        for (pl.ecommerce.model.CartItem cartItem : cartItems) {
+            pl.ecommerce.model.OrderItem orderItem = new pl.ecommerce.model.OrderItem();
+            orderItem.setProductId(cartItem.getProductId());
+            orderItem.setProductName(cartItem.getName());
+            orderItem.setPrice(cartItem.getPrice());
+            orderItem.setQuantity(cartItem.getQuantity());
+            orderItem.setOrder(order); // Ustawienie relacji
+            items.add(orderItem);
+        }
+        order.setOrderItems(items);
+
+        // Zapis do bazy
+        orderRepository.save(order);
+
+        // WYCZYSZCZENIE KOSZYKA PO ZAKUPIE
+        clearCart();
+    }
 }

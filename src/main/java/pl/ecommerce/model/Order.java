@@ -40,5 +40,5 @@ public class Order {
 
     // Lista produktów w zamówieniu
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
-    private List(OrderItem) orderItems = new ArrayList<>();
+    private List<OrderItem> orderItems = new ArrayList<>();
 }
