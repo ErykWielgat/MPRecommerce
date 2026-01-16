@@ -11,6 +11,7 @@ import pl.ecommerce.model.Review;
 import pl.ecommerce.repository.CategoryRepository;
 import pl.ecommerce.repository.ProductRepository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -91,5 +92,22 @@ public class ProductService {
     public Product getProductEntity(Long id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Nie znaleziono produktu"));
+    }
+    public List<ProductDto> filterProducts(Long categoryId, BigDecimal minPrice, BigDecimal maxPrice, String name, String sortField, String sortDir) {
+        // 1. Ustalanie kierunku sortowania (rosnąco/malejąco)
+        org.springframework.data.domain.Sort.Direction direction =
+                "desc".equalsIgnoreCase(sortDir) ? org.springframework.data.domain.Sort.Direction.DESC : org.springframework.data.domain.Sort.Direction.ASC;
+
+        // 2. Ustalanie po czym sortujemy (domyślnie po nazwie)
+        String actualSortField = (sortField != null && !sortField.isEmpty()) ? sortField : "name";
+
+        // 3. Wywołanie "inteligentnego zapytania" z repozytorium
+        List<Product> products = productRepository.searchProducts(
+                categoryId, minPrice, maxPrice, name,
+                org.springframework.data.domain.Sort.by(direction, actualSortField)
+        );
+
+        // 4. Zamiana na DTO
+        return products.stream().map(this::mapToDto).collect(Collectors.toList());
     }
 }

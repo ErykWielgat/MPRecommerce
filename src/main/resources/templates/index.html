@@ -7,36 +7,93 @@
 </head>
 <body class="bg-light">
 
-<div class="container mt-5">
-    <h1 class="text-center mb-4">Witaj w naszym Sklepie!</h1>
-
-    <div class="mb-3 text-end">
-        <a href="#" class="btn btn-success">Dodaj nowy produkt</a>
-    </div>
+<div class="container-fluid mt-4">
+    <h1 class="text-center mb-4">Sklep Internetowy</h1>
 
     <div class="row">
-        <div class="col-md-4 mb-4" th:each="product : ${products}">
-            <div class="card h-100 shadow-sm">
-                <img th:src="${product.imageUrl != null ? product.imageUrl : 'https://via.placeholder.com/300'}"
-                     class="card-img-top" alt="Zdjęcie produktu" style="height: 200px; object-fit: cover;">
+        <div class="col-md-2 p-3 bg-white rounded shadow-sm ms-3" style="height: fit-content; font-size: 0.9rem;">
+            <h5 class="mb-3">Filtrowanie</h5>
+            <form action="/" method="get">
 
-                <div class="card-body">
-                    <h5 class="card-title" th:text="${product.name}">Nazwa Produktu</h5>
-
-                    <p class="card-text text-muted" th:text="${product.description}">Opis...</p>
-
-                    <h4 class="text-primary">
-                        <span th:text="${product.price}">0.00</span> PLN
-                    </h4>
+                <div class="mb-2">
+                    <label class="form-label mb-1">Nazwa</label>
+                    <input type="text" name="name" class="form-control form-control-sm" th:value="${paramName}" placeholder="Szukaj...">
                 </div>
 
-                <div class="card-footer bg-white border-top-0 d-flex justify-content-between">
-                    <a th:href="@{'/product/' + ${product.id}}" class="btn btn-outline-primary btn-sm">Szczegóły</a>
-                    <a th:href="@{'/cart/add/' + ${product.id}}" class="btn btn-warning btn-sm">Do koszyka</a>                </div>
+                <div class="mb-2">
+                    <label class="form-label mb-1">Kategoria</label>
+                    <select name="categoryId" class="form-select form-select-sm">
+                        <option value="">-- Wszystkie --</option>
+                        <option th:each="cat : ${categories}"
+                                th:value="${cat.id}"
+                                th:text="${cat.name}"
+                                th:selected="${cat.id == paramCategoryId}">
+                        </option>
+                    </select>
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label mb-1">Cena od:</label>
+                    <input type="number" name="minPrice" class="form-control form-control-sm" th:value="${paramMinPrice}" step="0.01">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label mb-1">Cena do:</label>
+                    <input type="number" name="maxPrice" class="form-control form-control-sm" th:value="${paramMaxPrice}" step="0.01">
+                </div>
+
+                <hr class="my-2">
+                <h6 class="mb-2">Sortowanie</h6>
+                <div class="mb-3">
+                    <select name="sort" class="form-select form-select-sm mb-1">
+                        <option value="name" th:selected="${paramSort == 'name'}">Po nazwie</option>
+                        <option value="price" th:selected="${paramSort == 'price'}">Po cenie</option>
+                    </select>
+                    <select name="dir" class="form-select form-select-sm">
+                        <option value="asc" th:selected="${paramDir == 'asc'}">Rosnąco</option>
+                        <option value="desc" th:selected="${paramDir == 'desc'}">Malejąco</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-sm w-100">Filtruj</button>
+                <a href="/" class="btn btn-outline-secondary btn-sm w-100 mt-2">Wyczyść</a>
+            </form>
+        </div>
+
+        <div class="col-md-9 ms-md-4">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="m-0">Produkty</h4>
+                <a href="/cart" class="btn btn-warning">
+                    <i class="bi bi-cart"></i> Twój Koszyk
+                </a>
+            </div>
+
+            <div class="row">
+                <div class="col-md-3 mb-4" th:each="product : ${products}">
+                    <div class="card h-100 shadow-sm border-0">
+                        <img th:src="${product.imageUrl != null ? product.imageUrl : 'https://via.placeholder.com/300'}"
+                             class="card-img-top" alt="Zdjęcie" style="height: 180px; object-fit: cover;">
+
+                        <div class="card-body p-3">
+                            <h6 class="card-title text-truncate" th:text="${product.name}">Nazwa</h6>
+                            <h5 class="text-primary mb-2">
+                                <span th:text="${product.price}">0.00</span> PLN
+                            </h5>
+                        </div>
+
+                        <div class="card-footer bg-white border-top-0 d-flex justify-content-between p-3">
+                            <a th:href="@{'/product/' + ${product.id}}" class="btn btn-outline-primary btn-sm">Podgląd</a>
+                            <a th:href="@{'/cart/add/' + ${product.id}}" class="btn btn-success btn-sm">+</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:if="${products.isEmpty()}" class="alert alert-info w-100">
+                    Nie znaleziono produktów spełniających kryteria.
+                </div>
             </div>
         </div>
     </div>
 </div>
-
 </body>
 </html>

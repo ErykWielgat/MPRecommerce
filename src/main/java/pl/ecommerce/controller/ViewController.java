@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import pl.ecommerce.service.CategoryService;
 import pl.ecommerce.service.ProductService;
 
 @Controller // UWAGA: Tu jest zwykły Controller, a nie RestController!
@@ -11,18 +12,33 @@ import pl.ecommerce.service.ProductService;
 public class ViewController {
 
     private final ProductService productService;
+    private final CategoryService categoryService;
 
     // To obsłuży wejście na stronę główną: http://localhost:8080/
     @GetMapping("/")
-    public String home(Model model) {
-        // 1. Pobieramy listę produktów z serwisu (tak jak w REST API)
-        var products = productService.getAllProducts();
+    public String home(Model model,
+                       @org.springframework.web.bind.annotation.RequestParam(required = false) Long categoryId,
+                       @org.springframework.web.bind.annotation.RequestParam(required = false) java.math.BigDecimal minPrice,
+                       @org.springframework.web.bind.annotation.RequestParam(required = false) java.math.BigDecimal maxPrice,
+                       @org.springframework.web.bind.annotation.RequestParam(required = false) String name,
+                       @org.springframework.web.bind.annotation.RequestParam(required = false, defaultValue = "name") String sort,
+                       @org.springframework.web.bind.annotation.RequestParam(required = false, defaultValue = "asc") String dir) {
 
-        // 2. Pakujemy produkty do "worka" o nazwie "model".
-        // Dzięki temu HTML będzie je widział pod nazwą "products".
+        // 1. Pobieramy przefiltrowane produkty
+        var products = productService.filterProducts(categoryId, minPrice, maxPrice, name, sort, dir);
         model.addAttribute("products", products);
 
-        // 3. Zwracamy nazwę pliku HTML (bez .html), który ma się wyświetlić
+        // 2. Pobieramy listę kategorii do paska bocznego
+        model.addAttribute("categories", categoryService.getAllCategories());
+
+        // 3. Przekazujemy obecne filtry z powrotem do widoku (żeby formularz pamiętał co wpisaliśmy)
+        model.addAttribute("paramCategoryId", categoryId);
+        model.addAttribute("paramMinPrice", minPrice);
+        model.addAttribute("paramMaxPrice", maxPrice);
+        model.addAttribute("paramName", name);
+        model.addAttribute("paramSort", sort);
+        model.addAttribute("paramDir", dir);
+
         return "index";
     }
     // 1. Wyświetlanie strony szczegółów
