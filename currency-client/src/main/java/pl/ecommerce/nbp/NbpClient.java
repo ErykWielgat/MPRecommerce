@@ -1,4 +1,4 @@
-package nbp;
+package pl.ecommerce.nbp;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;

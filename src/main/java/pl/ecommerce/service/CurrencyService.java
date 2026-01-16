@@ -1,10 +1,10 @@
 package pl.ecommerce.service;
 
 import lombok.RequiredArgsConstructor;
+import pl.ecommerce.nbp.NbpClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.ecommerce.model.CurrencyRate;
-import pl.ecommerce.nbp.NbpClient; // Tu importujemy klasę z TWOJEGO MODUŁU!
 import pl.ecommerce.nbp.NbpRateDto;
 import pl.ecommerce.repository.CurrencyRepository;
 
@@ -17,7 +17,6 @@ public class CurrencyService {
 
     private final CurrencyRepository currencyRepository;
     private final NbpClient nbpClient; // Wstrzykujemy klienta z modułu obok
-
     @Transactional
     public void updateRates() {
         // 1. Używamy modułu zewnętrznego do pobrania danych

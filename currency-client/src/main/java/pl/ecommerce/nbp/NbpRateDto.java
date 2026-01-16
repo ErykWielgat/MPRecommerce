@@ -1,4 +1,4 @@
-package nbp;
+package pl.ecommerce.nbp;
 
 import lombok.Data;
 
