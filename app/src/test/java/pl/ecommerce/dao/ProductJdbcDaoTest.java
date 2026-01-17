@@ -25,7 +25,11 @@ class ProductJdbcDaoTest {
     @Test
     void shouldFindExpensiveProducts() {
         // given
-        // Wstawiamy dane bezpośrednio SQL-em (pomijamy Hibernate)
+        // 1. NAJPIERW TWORZYMY TABELE (Bo H2 jest puste w @JdbcTest)
+        jdbcTemplate.execute("CREATE TABLE categories (id BIGINT PRIMARY KEY, name VARCHAR(255), description VARCHAR(255))");
+        jdbcTemplate.execute("CREATE TABLE products (id BIGINT PRIMARY KEY, name VARCHAR(255), price DECIMAL(10,2), category_id BIGINT, description VARCHAR(255), image_url VARCHAR(255))");
+
+        // 2. Wstawiamy dane
         jdbcTemplate.update("INSERT INTO categories (id, name) VALUES (1, 'TestCat')");
         jdbcTemplate.update("INSERT INTO products (id, name, price, category_id, description) VALUES (1, 'Cheap', 50.00, 1, 'desc')");
         jdbcTemplate.update("INSERT INTO products (id, name, price, category_id, description) VALUES (2, 'Expensive', 150.00, 1, 'desc')");

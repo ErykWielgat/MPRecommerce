@@ -1,7 +1,5 @@
 package pl.ecommerce.service;
 
-import jakarta.servlet.http.HttpSession;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,12 +10,11 @@ import pl.ecommerce.model.Product;
 import pl.ecommerce.repository.ProductRepository;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class CartServiceTest {
@@ -25,21 +22,8 @@ class CartServiceTest {
     @Mock
     private ProductRepository productRepository;
 
-    @Mock
-    private HttpSession session;
-
     @InjectMocks
     private CartService cartService;
-
-    private List<CartItem> cartItems;
-
-    @BeforeEach
-    void setUp() {
-        // Symulujemy zachowanie sesji - trzymamy listę w polu klasy testowej
-        cartItems = new ArrayList<>();
-        // Kiedy serwis zapyta o "cart", zwróć naszą listę
-        lenient().when(session.getAttribute("cart")).thenReturn(cartItems);
-    }
 
     @Test
     void shouldAddProductToCart() {
@@ -48,29 +32,47 @@ class CartServiceTest {
         p.setId(1L);
         p.setName("Mleko");
         p.setPrice(new BigDecimal("5.00"));
+        p.setImageUrl("img.jpg");
 
+        // Uczymy atrapę repozytorium, co ma zwrócić
         when(productRepository.findById(1L)).thenReturn(Optional.of(p));
 
         // when
         cartService.addProductToCart(1L);
 
         // then
-        assertEquals(1, cartItems.size());
-        assertEquals("Mleko", cartItems.get(0).getName());
-        assertEquals(new BigDecimal("5.00"), cartItems.get(0).getPrice());
+        // Zamiast sprawdzać prywatne pole, używamy publicznego gettera
+        List<CartItem> items = cartService.getCartItems();
+        assertEquals(1, items.size());
+        assertEquals("Mleko", items.get(0).getName());
     }
 
     @Test
     void shouldCalculateTotalSum() {
         // given
-        cartItems.add(new CartItem(1L, "A", new BigDecimal("10.00"), null, 1));
-        cartItems.add(new CartItem(2L, "B", new BigDecimal("20.00"), null, 2)); // 2 * 20 = 40
+        Product p1 = new Product();
+        p1.setId(1L);
+        p1.setPrice(new BigDecimal("10.00"));
+
+        Product p2 = new Product();
+        p2.setId(2L);
+        p2.setPrice(new BigDecimal("20.00"));
+
+        // Konfigurujemy mocki dla obu produktów
+        when(productRepository.findById(1L)).thenReturn(Optional.of(p1));
+        when(productRepository.findById(2L)).thenReturn(Optional.of(p2));
+
+        // Dodajemy produkty "legalnie" przez metodę serwisu
+        // Dzięki temu trafią do wewnętrznej listy w cartService
+        cartService.addProductToCart(1L); // Wartość: 10.00
+        cartService.addProductToCart(2L); // Wartość: 20.00
+        cartService.addProductToCart(2L); // Druga sztuka tego samego -> 2 * 20.00 = 40.00
 
         // when
         BigDecimal total = cartService.getTotalSum();
 
         // then
-        // 10 + 40 = 50
+        // 10.00 + 40.00 = 50.00
         assertEquals(new BigDecimal("50.00"), total);
     }
 }

@@ -35,10 +35,17 @@ class ProductServiceTest {
     @Test
     void shouldReturnAllProductsAsDto() {
         // given
+        // 1. Tworzymy Kategorię (żeby nie było null)
+        Category cat = new Category();
+        cat.setId(99L);
+        cat.setName("Testowa Kat");
+
+        // 2. Tworzymy Produkt i przypisujemy mu kategorię
         Product p = new Product();
         p.setId(1L);
         p.setName("Test Product");
         p.setPrice(BigDecimal.TEN);
+        p.setCategory(cat); // <--- TO NAPRAWIA NPE
 
         when(productRepository.findAll()).thenReturn(List.of(p));
 
@@ -48,6 +55,7 @@ class ProductServiceTest {
         // then
         assertEquals(1, result.size());
         assertEquals("Test Product", result.get(0).getName());
+        assertEquals(99L, result.get(0).getCategoryId()); // Sprawdzamy czy ID kategorii przeszło
     }
 
     @Test
