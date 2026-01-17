@@ -123,4 +123,5 @@ public class ProductService {
         // 4. Zamiana na DTO
         return products.stream().map(this::mapToDto).collect(Collectors.toList());
     }
+
 }

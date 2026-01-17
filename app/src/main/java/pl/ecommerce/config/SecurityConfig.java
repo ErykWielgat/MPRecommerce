@@ -17,17 +17,26 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Wyłączamy CSRF dla ułatwienia na start (formularze POST będą działać bez tokena)
+                .csrf(csrf -> csrf.disable()) // Wyłączamy CSRF dla ułatwienia (API/Postman)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/admin/**").hasRole("ADMIN") // Tylko zalogowany z rolą ADMIN wejdzie tutaj
-                        .anyRequest().permitAll() // Wszystko inne (sklep, koszyk, css) jest dostępne dla każdego
+                        // 1. NAJWAŻNIEJSZE: Specyficzne reguły na samym początku!
+
+
+                        // Nasze REST API (też publiczne)
+                        .requestMatchers("/api/**").permitAll()
+
+                        // Panel Admina (tylko dla admina)
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+
+                        // 2. SZLABAN: To musi być OSTATNIA linia w tej sekcji
+                        .anyRequest().permitAll()
                 )
                 .formLogin(login -> login
-                        .defaultSuccessUrl("/admin", true) // Gdzie przekierować po udanym logowaniu
+                        .defaultSuccessUrl("/admin", true)
                         .permitAll()
                 )
                 .logout(logout -> logout
-                        .logoutSuccessUrl("/") // Gdzie po wylogowaniu
+                        .logoutSuccessUrl("/")
                         .permitAll()
                 );
 
@@ -36,10 +45,9 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        // Tworzymy testowego admina w pamięci aplikacji
         UserDetails admin = User.withDefaultPasswordEncoder()
                 .username("admin")
-                .password("admin67")
+                .password("admin123")
                 .roles("ADMIN")
                 .build();
 
