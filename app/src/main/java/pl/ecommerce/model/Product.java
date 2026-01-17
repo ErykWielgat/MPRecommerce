@@ -28,6 +28,9 @@ public class Product {
     @Column(nullable = false)
     private BigDecimal price;
 
+    @Column(nullable = false)
+    private Integer stock = 0;
+
     private String imageUrl; // Link do zdjęcia lub nazwa pliku
 
     // Relacja: Wiele produktów -> Jedna kategoria

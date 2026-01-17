@@ -49,6 +49,13 @@
                     <h2 class="text-success fw-bold mb-4">
                         <span th:text="${product.price}">0.00</span> PLN
                     </h2>
+                    <p class="lead" th:text="${product.price} + ' PLN'">Cena</p>
+                    <p class="fw-bold" th:classappend="${product.stock > 0} ? 'text-success' : 'text-danger'">
+                        <span th:if="${product.stock > 0}">Dostępny w magazynie: <span th:text="${product.stock}"></span> szt.</span>
+                        <span th:unless="${product.stock > 0}">Produkt niedostępny (wyprzedany)</span>
+                    </p>
+                    <form th:action="@{/cart/add}" method="post" th:if="${product.stock > 0}">
+                    </form>
 
                     <div class="mb-4">
                         <h5>Opis:</h5>

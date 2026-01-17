@@ -14,7 +14,6 @@
         <div class="navbar-nav">
             <a class="nav-link active" href="/admin">Produkty</a>
             <a class="nav-link" href="/admin/reviews">Opinie</a>
-            <a class="nav-link" href="/admin/currencies">Waluty</a>
             <a class="nav-link text-warning ms-3" href="/">Wróć do sklepu</a>
         </div>
     </div>
@@ -46,7 +45,6 @@
             <td th:text="${p.price}">100</td>
             <td>
                 <a th:href="@{'/admin/product/' + ${p.id}}" class="btn btn-info btn-sm text-white">Szczegóły</a>
-                <a th:href="@{'/admin/products/edit/' + ${p.id}}" class="btn btn-warning btn-sm text-white">Edytuj</a>
                 <a th:href="@{'/admin/products/delete/' + ${p.id}}" class="btn btn-danger btn-sm" onclick="return confirm('Na pewno usunąć produkt?');">Usuń</a>
             </td>
         </tr>

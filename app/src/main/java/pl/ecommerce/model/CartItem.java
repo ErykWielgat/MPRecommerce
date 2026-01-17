@@ -3,11 +3,14 @@ package pl.ecommerce.model;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import java.math.BigDecimal;
+
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Getter
 public class CartItem {
     private Long productId;
     private String name;

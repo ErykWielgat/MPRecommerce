@@ -20,9 +20,10 @@ public class ProductDto {
     @NotNull(message = "Cena jest wymagana")
     @DecimalMin(value = "0.01", message = "Cena musi być większa od 0")
     private BigDecimal price;
-
+    private Integer stock;
     private String imageUrl;
 
     @NotNull(message = "Kategoria jest wymagana")
     private Long categoryId; // Klient podaje tylko ID kategorii, np. 5 (Elektronika)
+
 }

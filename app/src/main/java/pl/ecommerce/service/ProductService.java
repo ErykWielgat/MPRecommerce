@@ -43,28 +43,26 @@ public class ProductService {
     @Transactional
     public ProductDto createProduct(ProductDto productDto) {
         Product product;
-
-        // Sprawdzamy, czy to edycja (czy DTO ma ID)
         if (productDto.getId() != null) {
-            // EDYCJA: Pobieramy istniejący produkt
             product = productRepository.findById(productDto.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Produkt nie istnieje"));
         } else {
-            // NOWY: Tworzymy nowy obiekt
             product = new Product();
         }
 
-        // Aktualizujemy pola
         product.setName(productDto.getName());
         product.setDescription(productDto.getDescription());
         product.setPrice(productDto.getPrice());
 
-        // Aktualizujemy zdjęcie tylko jeśli przesłano nowy link/plik (żeby nie nadpisać puste)
+        // --- NOWE: Zapisujemy stan magazynowy ---
+        // Jeśli w DTO stock jest null (np. nie podano), ustawiamy 0
+        product.setStock(productDto.getStock() != null ? productDto.getStock() : 0);
+        // ----------------------------------------
+
         if (productDto.getImageUrl() != null && !productDto.getImageUrl().isEmpty()) {
             product.setImageUrl(productDto.getImageUrl());
         }
 
-        // Kategoria
         Category category = categoryRepository.findById(productDto.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Kategoria nie istnieje"));
         product.setCategory(category);
@@ -73,7 +71,6 @@ public class ProductService {
         return mapToDto(savedProduct);
     }
 
-    // Metoda pomocnicza: Encja -> DTO
     private ProductDto mapToDto(Product product) {
         ProductDto dto = new ProductDto();
         dto.setId(product.getId());
@@ -81,8 +78,26 @@ public class ProductService {
         dto.setDescription(product.getDescription());
         dto.setPrice(product.getPrice());
         dto.setImageUrl(product.getImageUrl());
-        dto.setCategoryId(product.getCategory().getId()); // Wyciągamy ID z obiektu kategorii
+        dto.setCategoryId(product.getCategory().getId());
+
+        // --- NOWE: Przepisujemy stan do DTO ---
+        dto.setStock(product.getStock());
+        // --------------------------------------
+
         return dto;
+    }
+
+    @Transactional
+    public void decreaseStock(Long productId, int quantityToDecrease) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Produkt nie znaleziony"));
+
+        if (product.getStock() < quantityToDecrease) {
+            throw new RuntimeException("Niewystarczająca ilość produktu " + product.getName() + " w magazynie!");
+        }
+
+        product.setStock(product.getStock() - quantityToDecrease);
+        productRepository.save(product);
     }
     // Metoda do dodawania opinii
     @Transactional
