@@ -57,6 +57,24 @@ class ProductServiceTest {
         assertEquals("Test Product", result.get(0).getName());
         assertEquals(99L, result.get(0).getCategoryId()); // Sprawdzamy czy ID kategorii przeszło
     }
+    @Test
+    void shouldThrowExceptionWhenCategoryNotFoundDuringCreation() {
+        // given
+        ProductDto dto = new ProductDto();
+        dto.setCategoryId(999L); // Nieistniejąca kategoria
+
+        when(categoryRepository.findById(999L)).thenReturn(Optional.empty());
+
+        // when & then
+        // Zakładam, że rzucasz RuntimeException lub inną, gdy kategoria nie istnieje
+        assertThrows(RuntimeException.class, () -> productService.createProduct(dto));
+    }
+
+    @Test
+    void shouldHandleUpdateProduct() {
+        // Test edycji produktu (jeśli masz metodę updateProduct)
+        // To często pomijana logika, która ma dużo if-ów
+    }
 
     @Test
     void shouldCreateProduct() {

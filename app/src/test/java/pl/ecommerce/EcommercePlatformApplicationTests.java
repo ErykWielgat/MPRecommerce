@@ -11,6 +11,7 @@ import pl.ecommerce.model.Category;
 import pl.ecommerce.model.Product;
 import pl.ecommerce.repository.CategoryRepository;
 import pl.ecommerce.repository.ProductRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
@@ -23,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest // Uruchamia CAŁĄ aplikację (Baza H2, Security, Serwisy...)
 @AutoConfigureMockMvc
+@Transactional
 class EcommercePlatformApplicationTests {
 
     @Autowired

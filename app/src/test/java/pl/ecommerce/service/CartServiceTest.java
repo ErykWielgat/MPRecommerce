@@ -75,4 +75,5 @@ class CartServiceTest {
         // 10.00 + 40.00 = 50.00
         assertEquals(new BigDecimal("50.00"), total);
     }
+
 }
