@@ -4,71 +4,54 @@
     <meta charset="UTF-8">
     <title>Edycja Produktu</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
-<body class="bg-light">
+<body>
 
 <div class="container mt-5">
-    <div class="col-md-6 offset-md-3 bg-white p-4 rounded shadow">
-
-        <h3 class="mb-4 text-center"
-            th:text="${productDto.id == null ? 'Nowy Produkt' : 'Edycja: ' + productDto.name}">
-            Produkt
-        </h3>
+    <div class="col-md-6 offset-md-3 card p-4 shadow">
+        <h3 class="mb-4 text-center" th:text="${productDto.id == null ? 'Nowy Produkt' : 'Edycja: ' + productDto.name}">Produkt</h3>
 
         <form action="/admin/products/save" th:object="${productDto}" method="post" enctype="multipart/form-data">
-
             <input type="hidden" th:field="*{id}">
 
             <div class="mb-3">
                 <label class="form-label">Nazwa</label>
                 <input type="text" th:field="*{name}" class="form-control" required>
             </div>
-
             <div class="mb-3">
                 <label class="form-label">Opis</label>
                 <textarea th:field="*{description}" class="form-control" rows="3"></textarea>
             </div>
-
             <div class="mb-3">
-                <label class="form-label">Cena</label>
+                <label class="form-label">Cena (PLN)</label>
                 <input type="number" step="0.01" th:field="*{price}" class="form-control" required>
             </div>
-
             <div class="mb-3">
                 <label class="form-label">Kategoria</label>
                 <select th:field="*{categoryId}" class="form-select">
-                    <option th:each="cat : ${categories}"
-                            th:value="${cat.id}"
-                            th:text="${cat.name}">
-                    </option>
+                    <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"></option>
                 </select>
             </div>
-
             <div class="mb-3 p-3 border rounded bg-light">
                 <label class="form-label fw-bold">Zdjęcie produktu</label>
-
                 <div th:if="*{imageUrl}" class="mb-2 text-center">
-                    <p class="small text-muted mb-1">Aktualne zdjęcie:</p>
                     <img th:src="*{imageUrl}" class="img-thumbnail" style="max-height: 150px;">
                     <input type="hidden" th:field="*{imageUrl}">
                 </div>
-
-                <label class="form-label small">Wgraj nowe (zastąpi obecne):</label>
+                <label class="form-label small">Wgraj nowe:</label>
                 <input type="file" name="imageFile" class="form-control" accept="image/*">
-
                 <div class="text-center my-2">- LUB -</div>
-
-                <label class="form-label small">Wklej link do zdjęcia:</label>
-                <input type="text" name="imageUrl" th:value="*{imageUrl}" class="form-control form-control-sm" placeholder="https://...">
+                <label class="form-label small">Link do zdjęcia:</label>
+                <input type="text" name="imageUrl" th:value="*{imageUrl}" class="form-control form-control-sm">
             </div>
 
             <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-primary flex-grow-1">Zapisz zmiany</button>
+                <button type="submit" class="btn btn-primary flex-grow-1">Zapisz</button>
                 <a href="/admin" class="btn btn-outline-secondary">Anuluj</a>
             </div>
         </form>
     </div>
 </div>
-
 </body>
 </html>

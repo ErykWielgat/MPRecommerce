@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
-<body class="bg-light">
+<body>
 
 <div class="container mt-5 mb-5">
     <h2 class="mb-4">Twój Koszyk</h2>
@@ -22,9 +22,8 @@
     </div>
 
     <div th:unless="${cartItems.isEmpty()}">
-
         <table class="table table-hover bg-white shadow-sm rounded">
-            <thead class="table-light">
+            <thead>
             <tr>
                 <th>Produkt</th>
                 <th>Cena jedn.</th>
@@ -37,18 +36,15 @@
             <tr th:each="item : ${cartItems}">
                 <td>
                     <div class="d-flex align-items-center">
-                        <img th:if="${item.imageUrl}" th:src="${item.imageUrl}"
-                             style="width: 50px; height: 50px; object-fit: contain;" class="me-3 border rounded">
+                        <img th:if="${item.imageUrl}" th:src="${item.imageUrl}" style="width: 50px; height: 50px; object-fit: contain;" class="me-3 border rounded">
                         <span th:text="${item.name}" class="fw-bold">Nazwa</span>
                     </div>
                 </td>
                 <td th:text="${item.price} + ' PLN'">Cena</td>
                 <td th:text="${item.quantity}">1</td>
-                <td th:text="${item.getTotalPrice()} + ' PLN'" class="fw-bold text-dark">Suma</td>
+                <td th:text="${item.getTotalPrice()} + ' PLN'" class="fw-bold">Suma</td>
                 <td>
-                    <a th:href="@{'/cart/remove/' + ${item.productId}}" class="btn btn-outline-danger btn-sm">
-                        <i class="bi bi-trash"></i> Usuń
-                    </a>
+                    <a th:href="@{'/cart/remove/' + ${item.productId}}" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i> Usuń</a>
                 </td>
             </tr>
             </tbody>
@@ -58,62 +54,39 @@
             <a href="/" class="btn btn-outline-secondary">&larr; Kontynuuj zakupy</a>
         </div>
 
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-dark text-white">
+        <div class="card shadow-sm border-0 no-hover">
+            <div class="card-header text-white">
                 <h5 class="m-0">Podsumowanie i Płatność</h5>
             </div>
             <div class="card-body">
                 <div class="row align-items-center">
-
                     <div class="col-md-6">
                         <p class="mb-2 text-muted">Wybierz walutę płatności:</p>
                         <div class="btn-group" role="group">
-                            <a th:href="@{/cart(currency='PLN')}"
-                               class="btn btn-outline-secondary"
-                               th:classappend="${selectedCurrency == 'PLN' ? 'active' : ''}">PLN</a>
-
-                            <a th:href="@{/cart(currency='USD')}"
-                               class="btn btn-outline-success"
-                               th:classappend="${selectedCurrency == 'USD' ? 'active' : ''}">USD</a>
-
-                            <a th:href="@{/cart(currency='EUR')}"
-                               class="btn btn-outline-primary"
-                               th:classappend="${selectedCurrency == 'EUR' ? 'active' : ''}">EUR</a>
-
-                            <a th:href="@{/cart(currency='GBP')}"
-                               class="btn btn-outline-danger"
-                               th:classappend="${selectedCurrency == 'GBP' ? 'active' : ''}">GBP</a>
-
-                            <a th:href="@{/cart(currency='CHF')}"
-                               class="btn btn-outline-info"
-                               th:classappend="${selectedCurrency == 'CHF' ? 'active' : ''}">CHF</a>
+                            <a th:href="@{/cart(currency='PLN')}" class="btn btn-outline-secondary" th:classappend="${selectedCurrency == 'PLN' ? 'active' : ''}">PLN</a>
+                            <a th:href="@{/cart(currency='USD')}" class="btn btn-outline-success" th:classappend="${selectedCurrency == 'USD' ? 'active' : ''}">USD</a>
+                            <a th:href="@{/cart(currency='EUR')}" class="btn btn-outline-primary" th:classappend="${selectedCurrency == 'EUR' ? 'active' : ''}">EUR</a>
+                            <a th:href="@{/cart(currency='GBP')}" class="btn btn-outline-danger" th:classappend="${selectedCurrency == 'GBP' ? 'active' : ''}">GBP</a>
+                            <a th:href="@{/cart(currency='CHF')}" class="btn btn-outline-info" th:classappend="${selectedCurrency == 'CHF' ? 'active' : ''}">CHF</a>
                         </div>
                     </div>
 
                     <div class="col-md-6 text-md-end mt-3 mt-md-0">
                         <p class="text-muted mb-0">Suma produktów (PLN): <span th:text="${totalSum}">0.00</span> zł</p>
-
                         <h2 class="fw-bold mb-3">
-                            Do zapłaty:
-                            <span th:text="${#numbers.formatDecimal(finalPrice, 1, 2)}" style="color: #198754;">0.00</span>
+                            Do zapłaty: <span th:text="${#numbers.formatDecimal(finalPrice, 1, 2)}" style="color: var(--success-color);">0.00</span>
                             <span th:text="${selectedCurrency}">PLN</span>
                         </h2>
-
-                        <div th:if="${selectedCurrency != 'PLN'}" class="text-muted small mb-3">
-                            (Przeliczono automatycznie wg kursu NBP)
-                        </div>
-
-                        <a href="/order/checkout" class="btn btn-success btn-lg w-100">
+                        <div th:if="${selectedCurrency != 'PLN'}" class="text-muted small mb-3">(Przeliczono automatycznie wg kursu NBP)</div>
+                        <a th:href="@{/order/checkout(currency=${selectedCurrency})}" class="btn btn-success btn-lg w-100">
                             Przejdź do kasy <i class="bi bi-arrow-right"></i>
                         </a>
                     </div>
                 </div>
             </div>
         </div>
-
     </div>
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

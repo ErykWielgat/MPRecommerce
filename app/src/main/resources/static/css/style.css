@@ -1,27 +1,122 @@
-/* --- Ogólne --- */
-body {
-    background-color: #f8f9fa; /* Odpowiednik klasy .bg-light */
+/* =========================================
+   1. ZMIENNE I KONFIGURACJA KOLORÓW
+   ========================================= */
+:root {
+    /* Główna paleta */
+    --primary-color: #3498db;       /* Nowoczesny niebieski */
+    --primary-dark: #2980b9;        /* Ciemniejszy niebieski (hover) */
+    --secondary-color: #2c3e50;     /* Ciemny granat (tekst, navbar) */
+    --accent-color: #f1c40f;        /* Żółty/Złoty (akcenty) */
+
+    /* Kolory funkcyjne */
+    --success-color: #27ae60;       /* Zielony (pieniądze, sukces) */
+    --danger-color: #e74c3c;        /* Czerwony (usuwanie, błędy) */
+    --light-bg: #f8f9fa;            /* Tło strony */
+    --white: #ffffff;
+
+    /* Cienie i obramowania */
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --card-hover-shadow: 0 10px 15px rgba(0, 0, 0, 0.15);
+    --border-radius: 10px;          /* Zaokrąglenie rogów */
 }
 
-/* --- Pasek Walut (Nowoczesny) --- */
-.currency-bar {
-    background-color: #2c3e50; /* Ciemny, elegancki kolor */
-    color: white;
-    padding: 10px 0;
-    display: flex;
-    justify-content: center; /* Wyśrodkowanie */
-    align-items: center;
-    gap: 30px; /* Odstęp między walutami */
+/* =========================================
+   2. OGÓLNE USTAWIENIA STRONY
+   ========================================= */
+body {
+    background-color: var(--light-bg);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    margin-bottom: 20px;
+    color: #333;
+    line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--secondary-color);
+    font-weight: 600;
+}
+
+a {
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+/* Poprawka dla kontenerów, żeby nie dotykały krawędzi na małych ekranach */
+.container, .container-fluid {
+    padding-bottom: 50px; /* Odstęp od dołu */
+}
+
+/* =========================================
+   3. NOWOCZESNE KARTY (Card)
+   ========================================= */
+.card {
+    border: none; /* Usuwamy domyślne obramowanie Bootstrapa */
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    background-color: var(--white);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden; /* Żeby obrazki nie wystawały poza zaokrąglenie */
+}
+
+/* Efekt uniesienia karty po najechaniu (dla produktów) */
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--card-hover-shadow);
+}
+
+.card-header {
+    background-color: var(--white);
+    border-bottom: 1px solid #eee;
+    font-weight: bold;
+    color: var(--secondary-color);
+    padding: 15px 20px;
+}
+
+.card-footer {
+    background-color: var(--white);
+    border-top: 1px solid #eee;
+}
+
+/* Zdjęcia produktów w kartach */
+.product-card-img {
+    height: 200px;
+    object-fit: contain; /* Obrazek nie zostanie ucięty */
+    padding: 20px;
+    transition: transform 0.3s;
+}
+
+.card:hover .product-card-img {
+    transform: scale(1.05); /* Lekkie powiększenie zdjęcia */
+}
+
+/* =========================================
+   4. PASEK WALUT (Currency Bar)
+   ========================================= */
+.currency-bar {
+    background: linear-gradient(90deg, #2c3e50 0%, #34495e 100%); /* Nowoczesny gradient */
+    color: var(--white);
+    padding: 12px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    font-size: 0.95rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    margin-bottom: 30px;
+    flex-wrap: wrap; /* Żeby na telefonie się nie sypało */
 }
 
 .currency-item {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 14px;
+    background: rgba(255, 255, 255, 0.1); /* Przezroczyste tło dla elementu */
+    padding: 5px 12px;
+    border-radius: 20px;
+    transition: background 0.3s;
+}
+
+.currency-item:hover {
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .currency-flag {
@@ -32,32 +127,129 @@ body {
 }
 
 .currency-code {
-    font-weight: bold;
-    color: #bdc3c7;
+    font-weight: 600;
+    color: #ecf0f1;
 }
 
 .currency-value {
-    font-weight: bold;
-    color: #2ecc71; /* Zielony kolor dla ceny */
+    font-weight: 700;
+    color: var(--success-color); /* Zielony kolor dla waluty */
+    text-shadow: 0 0 5px rgba(39, 174, 96, 0.3);
 }
 
-/* --- Panel boczny (Filtrowanie) --- */
+/* =========================================
+   5. PRZYCISKI (Buttons) - Nadpisanie Bootstrap
+   ========================================= */
+.btn {
+    border-radius: 6px;
+    font-weight: 500;
+    padding: 8px 16px;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+.btn-success {
+    background-color: var(--success-color);
+    border-color: var(--success-color);
+}
+
+.btn-warning {
+    color: #fff;
+    background-color: #f39c12;
+    border-color: #f39c12;
+}
+
+/* =========================================
+   6. ELEMENTY PANELU BOCZNEGO (Sidebar)
+   ========================================= */
 .sidebar-container {
+    background-color: var(--white);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    box-shadow: var(--card-shadow);
     height: fit-content;
-    font-size: 0.9rem;
 }
 
-/* --- Karty Produktów --- */
-.product-card-img {
-    height: 180px;
-    object-fit: contain;
-    padding: 10px;
+.sidebar-container label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #666;
 }
 
-.card {
-    transition: transform 0.2s;
+/* =========================================
+   7. TABELE (Admin & Koszyk)
+   ========================================= */
+.table {
+    vertical-align: middle;
 }
 
-.card:hover {
-    transform: translateY(-5px); /* Lekkie uniesienie po najechaniu */
+.table thead {
+    background-color: var(--secondary-color);
+    color: var(--white);
+}
+
+.table thead th {
+    border: none;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+/* Zaokrąglenie tabeli wewnątrz karty */
+.table-hover tbody tr:hover {
+    background-color: rgba(52, 152, 219, 0.05); /* Delikatny niebieski po najechaniu */
+}
+
+/* =========================================
+   8. SPECIFICZNE DLA KOSZYKA I CHECKOUTU
+   ========================================= */
+.delivery-option {
+    cursor: pointer;
+}
+
+/* Wyróżnienie wybranej opcji dostawy */
+.form-check-input:checked + .form-check-label {
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
+/* Sekcja podsumowania (Total Price) */
+#total-price {
+    font-size: 1.5rem;
+    color: var(--success-color);
+}
+
+/* =========================================
+   9. PANEL ADMINA - Navbar
+   ========================================= */
+.navbar-dark.bg-secondary {
+    background: linear-gradient(90deg, #1a252f 0%, #2c3e50 100%) !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.navbar-brand {
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--accent-color) !important;
+}
+
+.nav-link.active {
+    color: var(--white) !important;
+    border-bottom: 2px solid var(--accent-color);
+}
+
+.card.no-hover:hover {
+    transform: none !important;
+    box-shadow: var(--card-shadow) !important; /* Nie zmieniaj cienia */
 }
