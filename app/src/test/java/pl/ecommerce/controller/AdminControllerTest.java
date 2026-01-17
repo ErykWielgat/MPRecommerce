@@ -3,19 +3,26 @@ package pl.ecommerce.controller;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.mock.web.MockMultipartFile; // Ważne do testowania plików
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import pl.ecommerce.config.SecurityConfig;
-import pl.ecommerce.repository.ProductRepository; // <--- Import
-import pl.ecommerce.repository.ReviewRepository;   // <--- Import
+import pl.ecommerce.model.Category;
+import pl.ecommerce.model.Product;
+import pl.ecommerce.repository.ProductRepository;
+import pl.ecommerce.repository.ReviewRepository;
 import pl.ecommerce.service.*;
 import pl.ecommerce.dao.ProductJdbcDao;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart; // Do testowania uploadu
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AdminController.class)
 @Import(SecurityConfig.class)
@@ -24,25 +31,20 @@ class AdminControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    // --- 1. ZALEŻNOŚCI BEZPOŚREDNIE KONTROLERA (Muszą tu być!) ---
+    // --- ZALEŻNOŚCI BEZPOŚREDNIE KONTROLERA ---
     @MockitoBean private ProductService productService;
     @MockitoBean private CategoryService categoryService;
     @MockitoBean private ImageService imageService;
-
-    // Tych dwóch brakowało i dlatego był błąd:
     @MockitoBean private ProductRepository productRepository;
     @MockitoBean private ReviewRepository reviewRepository;
 
-    // --- 2. ZALEŻNOŚCI POBOCZNE (Wymagane przez Security lub Global Layout) ---
-    // SecurityConfig lub SessionListener mogą wymagać CartService
+    // --- ZALEŻNOŚCI POBOCZNE (Wymagane przez Security/Layout) ---
     @MockitoBean private CartService cartService;
-
-    // Layout (header) często wymaga CurrencyService do wyświetlania kursów
     @MockitoBean private CurrencyService currencyService;
-
-    // Czasem wymagane, jeśli Security korzysta z JDBC
     @MockitoBean private ProductJdbcDao productJdbcDao;
 
+
+    // --- 1. TESTY DOSTĘPU I WIDOKÓW (DASHBOARD) ---
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
@@ -63,5 +65,57 @@ class AdminControllerTest {
     void shouldRedirectAnonymousUserToLogin() throws Exception {
         mockMvc.perform(get("/admin"))
                 .andExpect(status().is3xxRedirection());
+    }
+
+    // --- 2. TESTY AKCJI (ZAPIS, EDYCJA, USUWANIE) - Kluczowe dla pokrycia! ---
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void shouldSaveProductWithImage() throws Exception {
+        // given
+        MockMultipartFile imageFile = new MockMultipartFile(
+                "imageFile", "test.jpg", "image/jpeg", "content".getBytes()
+        );
+
+        when(imageService.saveImage(any())).thenReturn("/img/test.jpg");
+
+        // when & then
+        mockMvc.perform(multipart("/admin/products/save")
+                        .file(imageFile)
+                        .param("name", "Nowy Produkt")
+                        .param("price", "100.00")
+                        .param("categoryId", "1")
+                        .with(csrf())) // Token CSRF jest wymagany przy POST!
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin"));
+
+        verify(productService).createProduct(any());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void shouldDeleteProduct() throws Exception {
+        mockMvc.perform(get("/admin/products/delete/1"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin"));
+
+        verify(productRepository).deleteById(1L);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void shouldShowEditForm() throws Exception {
+        // given
+        Product p = new Product();
+        p.setId(1L);
+        p.setName("Stary");
+        p.setCategory(new Category()); // Unikamy NPE
+
+        when(productService.getProductEntity(1L)).thenReturn(p);
+
+        // when & then
+        mockMvc.perform(get("/admin/products/edit/1"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("admin/product-form"));
     }
 }
