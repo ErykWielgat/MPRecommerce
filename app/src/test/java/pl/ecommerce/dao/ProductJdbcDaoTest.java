@@ -25,7 +25,6 @@ class ProductJdbcDaoTest {
     @Test
     void shouldFindExpensiveProducts() {
         // given
-        // 1. NAJPIERW TWORZYMY TABELE (Bo H2 jest puste w @JdbcTest)
         jdbcTemplate.execute("CREATE TABLE categories (id BIGINT PRIMARY KEY, name VARCHAR(255), description VARCHAR(255))");
         jdbcTemplate.execute("CREATE TABLE products (id BIGINT PRIMARY KEY, name VARCHAR(255), price DECIMAL(10,2), category_id BIGINT, description VARCHAR(255), image_url VARCHAR(255))");
 

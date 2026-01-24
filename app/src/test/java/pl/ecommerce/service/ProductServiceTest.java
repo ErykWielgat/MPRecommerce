@@ -88,30 +88,27 @@ class ProductServiceTest {
     // --- 2. TESTY TWORZENIA I EDYCJI (CREATE / UPDATE) - Kluczowe dla Branches! ---
 
     @Test
-    void shouldCreateNewProduct() {
-        // given - ID jest NULL (tworzenie)
+    void shouldCreateProductWithNewCategory() {
+        // given
         ProductDto dto = new ProductDto();
-        dto.setName("Nowy");
-        dto.setPrice(BigDecimal.ONE);
-        dto.setCategoryId(1L);
+        dto.setName("Nowy z nową kategorią");
+        dto.setPrice(BigDecimal.TEN);
+        dto.setNewCategoryName("Super Nowa"); // <--- Testujemy nową funkcję
 
-        Category category = new Category();
-        category.setId(1L);
-
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
-        // Symulujemy zapis
-        when(productRepository.save(any(Product.class))).thenAnswer(inv -> {
-            Product saved = inv.getArgument(0);
-            saved.setId(10L);
-            return saved;
+        when(categoryRepository.findByName("Super Nowa")).thenReturn(Optional.empty()); // Nie ma takiej w bazie
+        when(categoryRepository.save(any(Category.class))).thenAnswer(inv -> {
+            Category c = inv.getArgument(0);
+            c.setId(55L);
+            return c;
         });
+        when(productRepository.save(any(Product.class))).thenAnswer(inv -> inv.getArgument(0));
 
         // when
         ProductDto result = productService.createProduct(dto);
 
         // then
-        assertNotNull(result.getId());
-        verify(productRepository).save(any(Product.class));
+        verify(categoryRepository).save(any(Category.class)); // Sprawdzamy czy zapisał kategorię
+        assertEquals("Nowy z nową kategorią", result.getName());
     }
 
     @Test

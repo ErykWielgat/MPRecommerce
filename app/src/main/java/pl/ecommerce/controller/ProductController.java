@@ -7,10 +7,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pl.ecommerce.dto.ProductDto;
 import pl.ecommerce.service.ProductService;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 
-@RestController // 1. Mówi Springowi: To tutaj wpadają zapytania HTTP
+@RestController
 @RequestMapping("/api/v1/products") // 2. Adres bazowy dla wszystkich metod w tym pliku
 @RequiredArgsConstructor
 public class ProductController {
@@ -18,10 +20,14 @@ public class ProductController {
     private final ProductService productService;
     private final pl.ecommerce.dao.ProductJdbcDao productJdbcDao;
 
-    // GET http://localhost:8080/api/v1/products
     @GetMapping
-    public ResponseEntity<List<ProductDto>> getAllProducts() {
-        return ResponseEntity.ok(productService.getAllProducts());
+    public ResponseEntity<Page<ProductDto>> getAllProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        // Uwaga: Musisz dodać metodę getAllProducts(Pageable) w ProductService!
+        return ResponseEntity.ok(productService.getAllProductsPaged(pageable));
     }
 
     // GET http://localhost:8080/api/v1/products/1
@@ -54,5 +60,13 @@ public class ProductController {
             @RequestParam java.math.BigDecimal amount) {
         int updatedRows = productJdbcDao.updatePriceByCategory(categoryId, amount);
         return ResponseEntity.ok("Zaktualizowano cen produktów: " + updatedRows);
+    }
+    // DELETE http://localhost:8080/api/v1/products/{id}
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+        productService.deleteProduct(id);
+
+        // Zwracamy 204 No Content (sukces, brak treści)
+        return ResponseEntity.noContent().build();
     }
 }

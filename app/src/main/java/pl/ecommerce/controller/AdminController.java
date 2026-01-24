@@ -91,6 +91,7 @@ public class AdminController {
         dto.setPrice(product.getPrice());
         dto.setCategoryId(product.getCategory().getId());
         dto.setImageUrl(product.getImageUrl());
+        dto.setStock(product.getStock());
 
         model.addAttribute("productDto", dto);
         model.addAttribute("categories", categoryService.getAllCategories());

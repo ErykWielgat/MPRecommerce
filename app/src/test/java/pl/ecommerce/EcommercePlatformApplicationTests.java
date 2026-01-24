@@ -40,15 +40,17 @@ class EcommercePlatformApplicationTests {
     void fullUserFlowTest() throws Exception {
         // 1. PRZYGOTOWANIE DANYCH
         Category cat = new Category();
-        cat.setName("Elektronika");
+        cat.setName("Elektronika Testowa");
         categoryRepository.save(cat);
 
         Product p = new Product();
         p.setName("Laptop Testowy");
         p.setPrice(new BigDecimal("2500.00"));
         p.setDescription("Super laptop");
+        p.setStock(10);// (Ustawiamy stan magazynowy)
         p.setCategory(cat);
         productRepository.save(p);
+
 
         // 2. STRONA GŁÓWNA
         mockMvc.perform(get("/"))
@@ -60,7 +62,6 @@ class EcommercePlatformApplicationTests {
                 .andExpect(status().isOk());
 
         // 4. DODANIE DO KOSZYKA I... POBRANIE SESJI!
-        // MvcResult to wynik zapytania, z którego wyciągniemy sesję
         var result = mockMvc.perform(get("/cart/add/" + p.getId())
                         .header("Referer", "/"))
                 .andExpect(status().is3xxRedirection())

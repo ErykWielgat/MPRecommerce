@@ -25,5 +25,5 @@ public class ProductDto {
 
     @NotNull(message = "Kategoria jest wymagana")
     private Long categoryId; // Klient podaje tylko ID kategorii, np. 5 (Elektronika)
-
+    private String newCategoryName;
 }

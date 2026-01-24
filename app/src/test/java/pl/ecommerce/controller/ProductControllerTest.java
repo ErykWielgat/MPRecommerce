@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 // ZMIANA IMPORTU:
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
@@ -36,25 +38,33 @@ class ProductControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    // ZMIANA: @MockBean -> @MockitoBean
     @MockitoBean private ProductService productService;
     @MockitoBean private ProductJdbcDao productJdbcDao;
     @MockitoBean private CartService cartService;
     @MockitoBean private CurrencyService currencyService;
 
-    // ... reszta testów bez zmian ...
-    // (Możesz zostawić metody testowe takie jak były, one są OK)
+    // --- 1. POPRAWIONY TEST PAGINACJI ---
     @Test
     @WithMockUser
-    void shouldGetAllProducts() throws Exception {
+    void shouldGetAllProductsPaged() throws Exception {
+        // given
         ProductDto dto = new ProductDto();
         dto.setName("RestTest");
         dto.setPrice(BigDecimal.valueOf(100));
-        when(productService.getAllProducts()).thenReturn(List.of(dto));
 
-        mockMvc.perform(get("/api/v1/products"))
+        // Teraz kontroler zwraca Page<ProductDto>, więc musimy zamockować PageImpl
+        // PageImpl to implementacja interfejsu Page
+        when(productService.getAllProductsPaged(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(dto)));
+
+        // when & then
+        mockMvc.perform(get("/api/v1/products")
+                        .param("page", "0")
+                        .param("size", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.size()").value(1));
+                // ZMIANA: Teraz lista jest w polu "content", a nie w głównym korzeniu
+                .andExpect(jsonPath("$.content.size()").value(1))
+                .andExpect(jsonPath("$.content[0].name").value("RestTest"));
     }
 
     @Test

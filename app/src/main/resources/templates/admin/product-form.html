@@ -32,10 +32,20 @@
                 <input type="number" class="form-control" id="stock" th:field="*{stock}" required min="0">
             </div>
             <div class="mb-3">
-                <label class="form-label">Kategoria</label>
-                <select th:field="*{categoryId}" class="form-select">
-                    <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"></option>
+                <label for="category" class="form-label">Wybierz Kategorię</label>
+                <select class="form-select" id="category" th:field="*{categoryId}">
+                    <option value="" selected>-- Wybierz z listy --</option>
+                    <option th:each="cat : ${categories}"
+                            th:value="${cat.id}"
+                            th:text="${cat.name}"></option>
                 </select>
+                <div class="form-text">Wybierz istniejącą kategorię z listy...</div>
+            </div>
+
+            <div class="mb-3">
+                <label for="newCategory" class="form-label">LUB Stwórz Nową Kategorię</label>
+                <input type="text" class="form-control" id="newCategory" th:field="*{newCategoryName}" placeholder="Np. Gaming">
+                <div class="form-text">Jeśli wpiszesz tutaj nazwę, wybór z listy powyżej zostanie zignorowany.</div>
             </div>
             <div class="mb-3 p-3 border rounded bg-light">
                 <label class="form-label fw-bold">Zdjęcie produktu</label>

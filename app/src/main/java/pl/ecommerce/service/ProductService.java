@@ -10,7 +10,8 @@ import pl.ecommerce.model.Product;
 import pl.ecommerce.model.Review;
 import pl.ecommerce.repository.CategoryRepository;
 import pl.ecommerce.repository.ProductRepository;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,12 +38,18 @@ public class ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Nie znaleziono produktu o id: " + id));
         return mapToDto(product);
     }
+    public Page<ProductDto> getAllProductsPaged(Pageable pageable) {
+        return productRepository.findAll(pageable)
+                .map(this::mapToDto); // .map() na obiekcie Page automatycznie konwertuje elementy
+    }
 
     // Tworzenie produktu (Modyfikacja danych wymaga @Transactional)
     // Metoda obsługująca zarówno TWORZENIE (id null) jak i EDYCJĘ (id istnieje)
     @Transactional
     public ProductDto createProduct(ProductDto productDto) {
         Product product;
+
+        // 1. Tworzenie lub edycja produktu
         if (productDto.getId() != null) {
             product = productRepository.findById(productDto.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Produkt nie istnieje"));
@@ -53,19 +60,38 @@ public class ProductService {
         product.setName(productDto.getName());
         product.setDescription(productDto.getDescription());
         product.setPrice(productDto.getPrice());
-
-        // --- NOWE: Zapisujemy stan magazynowy ---
-        // Jeśli w DTO stock jest null (np. nie podano), ustawiamy 0
         product.setStock(productDto.getStock() != null ? productDto.getStock() : 0);
-        // ----------------------------------------
 
         if (productDto.getImageUrl() != null && !productDto.getImageUrl().isEmpty()) {
             product.setImageUrl(productDto.getImageUrl());
         }
 
-        Category category = categoryRepository.findById(productDto.getCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Kategoria nie istnieje"));
+        // --- ZMIANA: Obsługa Kategorii ---
+        Category category;
+
+        // A. Czy użytkownik wpisał nazwę nowej kategorii?
+        if (productDto.getNewCategoryName() != null && !productDto.getNewCategoryName().trim().isEmpty()) {
+            String newName = productDto.getNewCategoryName().trim();
+
+            // Sprawdź czy taka już istnieje, żeby nie dublować
+            category = categoryRepository.findByName(newName)
+                    .orElseGet(() -> {
+                        Category newCat = new Category();
+                        newCat.setName(newName);
+                        return categoryRepository.save(newCat);
+                    });
+
+        } else {
+            // B. Nie wpisał nowej, więc bierzemy z listy (ID)
+            if (productDto.getCategoryId() == null) {
+                throw new RuntimeException("Musisz wybrać kategorię z listy lub wpisać nową nazwę!");
+            }
+            category = categoryRepository.findById(productDto.getCategoryId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Wybrana kategoria nie istnieje"));
+        }
+
         product.setCategory(category);
+        // --------------------------------
 
         Product savedProduct = productRepository.save(product);
         return mapToDto(savedProduct);
@@ -99,6 +125,7 @@ public class ProductService {
         product.setStock(product.getStock() - quantityToDecrease);
         productRepository.save(product);
     }
+
     // Metoda do dodawania opinii
     @Transactional
     public void addReview(Long productId, String author, String content, int rating) {
@@ -137,6 +164,13 @@ public class ProductService {
 
         // 4. Zamiana na DTO
         return products.stream().map(this::mapToDto).collect(Collectors.toList());
+    }
+    @Transactional
+    public void deleteProduct(Long id) {
+        if (!productRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Nie można usunąć. Produkt o id " + id + " nie istnieje.");
+        }
+        productRepository.deleteById(id);
     }
 
 }
