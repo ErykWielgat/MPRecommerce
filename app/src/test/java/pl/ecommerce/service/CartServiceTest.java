@@ -2,11 +2,15 @@ package pl.ecommerce.service;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import pl.ecommerce.dto.OrderDto;
 import pl.ecommerce.model.CartItem;
+import pl.ecommerce.model.Order;
 import pl.ecommerce.model.Product;
+import pl.ecommerce.repository.OrderRepository;
 import pl.ecommerce.repository.ProductRepository;
 
 import java.math.BigDecimal;
@@ -14,6 +18,9 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -21,6 +28,10 @@ class CartServiceTest {
 
     @Mock
     private ProductRepository productRepository;
+
+    // DODANE: Mock repozytorium zamówień, potrzebny do testowania saveOrder
+    @Mock
+    private OrderRepository orderRepository;
 
     @InjectMocks
     private CartService cartService;
@@ -63,10 +74,9 @@ class CartServiceTest {
         when(productRepository.findById(2L)).thenReturn(Optional.of(p2));
 
         // Dodajemy produkty "legalnie" przez metodę serwisu
-        // Dzięki temu trafią do wewnętrznej listy w cartService
-        cartService.addProductToCart(1L); // Wartość: 10.00
-        cartService.addProductToCart(2L); // Wartość: 20.00
-        cartService.addProductToCart(2L); // Druga sztuka tego samego -> 2 * 20.00 = 40.00
+        cartService.addProductToCart(1L);
+        cartService.addProductToCart(2L);
+        cartService.addProductToCart(2L);
 
         // when
         BigDecimal total = cartService.getTotalSum();
@@ -76,4 +86,143 @@ class CartServiceTest {
         assertEquals(new BigDecimal("50.00"), total);
     }
 
+    @Test
+    void shouldIncreaseQuantityWhenAddingSameProductTwice() {
+        // given
+        Product p = new Product();
+        p.setId(1L);
+        p.setPrice(BigDecimal.TEN);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(p));
+
+        // when
+        cartService.addProductToCart(1L);
+        cartService.addProductToCart(1L); // Drugi raz to samo
+
+        // then
+        List<CartItem> items = cartService.getCartItems();
+        assertEquals(1, items.size()); // Nadal jeden element w liście
+        assertEquals(2, items.get(0).getQuantity()); // Ale ilość to 2
+    }
+
+    @Test
+    void shouldUpdateQuantity() {
+        // given
+        Product p = new Product();
+        p.setId(1L);
+        p.setPrice(BigDecimal.TEN);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(p));
+        cartService.addProductToCart(1L);
+
+        // when
+        cartService.updateQuantity(1L, 5);
+
+        // then
+        assertEquals(5, cartService.getCartItems().get(0).getQuantity());
+    }
+
+    @Test
+    void shouldRemoveItemWhenUpdatingQuantityToZero() {
+        // given
+        Product p = new Product();
+        p.setId(1L);
+        p.setPrice(BigDecimal.TEN);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(p));
+        cartService.addProductToCart(1L);
+
+        // when
+        cartService.updateQuantity(1L, 0);
+
+        // then
+        assertTrue(cartService.getCartItems().isEmpty());
+    }
+
+    @Test
+    void shouldRemoveProduct() {
+        // given
+        Product p = new Product();
+        p.setId(1L);
+        p.setPrice(BigDecimal.TEN);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(p));
+        cartService.addProductToCart(1L);
+
+        // when
+        cartService.removeProduct(1L);
+
+        // then
+        assertTrue(cartService.getCartItems().isEmpty());
+    }
+
+    @Test
+    void shouldClearCart() {
+        // given
+        Product p = new Product();
+        p.setId(1L);
+        p.setPrice(BigDecimal.TEN);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(p));
+        cartService.addProductToCart(1L);
+
+        // when
+        cartService.clearCart();
+
+        // then
+        assertTrue(cartService.getCartItems().isEmpty());
+    }
+
+    @Test
+    void shouldSaveOrderWithKurierAndClearCart() {
+        // given
+        // 1. Dodajemy produkt do koszyka
+        Product p = new Product();
+        p.setId(10L);
+        p.setName("Testowy");
+        p.setPrice(new BigDecimal("100.00"));
+        when(productRepository.findById(10L)).thenReturn(Optional.of(p));
+        cartService.addProductToCart(10L);
+
+        // 2. Przygotowujemy dane z formularza
+        OrderDto dto = new OrderDto();
+        dto.setFirstName("Jan");
+        dto.setDeliveryMethod("KURIER");
+
+        // when
+        cartService.saveOrder(dto);
+
+        // then
+        // A. Sprawdzamy czy zawołano save na repozytorium
+        ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
+        verify(orderRepository).save(orderCaptor.capture());
+
+        Order savedOrder = orderCaptor.getValue();
+        // B. Sprawdzamy koszty (100 produkt + 20 kurier = 120)
+        assertEquals(new BigDecimal("120.00"), savedOrder.getTotalAmount());
+        assertEquals(new BigDecimal("20.00"), savedOrder.getDeliveryCost());
+
+        // C. Sprawdzamy czy koszyk został wyczyszczony
+        assertTrue(cartService.getCartItems().isEmpty());
+    }
+
+    @Test
+    void shouldSaveOrderWithPaczkomat() {
+        // given
+        Product p = new Product();
+        p.setId(10L);
+        p.setPrice(new BigDecimal("50.00"));
+        when(productRepository.findById(10L)).thenReturn(Optional.of(p));
+        cartService.addProductToCart(10L);
+
+        OrderDto dto = new OrderDto();
+        dto.setDeliveryMethod("PACZKOMAT");
+
+        // when
+        cartService.saveOrder(dto);
+
+        // then
+        ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
+        verify(orderRepository).save(orderCaptor.capture());
+
+        Order savedOrder = orderCaptor.getValue();
+        // 50 produkt + 10 paczkomat = 60
+        assertEquals(new BigDecimal("60.00"), savedOrder.getTotalAmount());
+        assertEquals(new BigDecimal("10.00"), savedOrder.getDeliveryCost());
+    }
 }

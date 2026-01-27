@@ -1,3 +1,6 @@
+/*
+ * Obiekt DTO przechowujący dane formularza zamówienia (adresowe i dostawy), podlegający walidacji przed przetworzeniem.
+ */
 package pl.ecommerce.dto;
 
 import jakarta.validation.constraints.*;

@@ -49,15 +49,18 @@
             </div>
             <div class="mb-3 p-3 border rounded bg-light">
                 <label class="form-label fw-bold">Zdjęcie produktu</label>
+
                 <div th:if="*{imageUrl}" class="mb-2 text-center">
                     <img th:src="*{imageUrl}" class="img-thumbnail" style="max-height: 150px;">
-                    <input type="hidden" th:field="*{imageUrl}">
                 </div>
-                <label class="form-label small">Wgraj nowe:</label>
+
+                <label class="form-label small">Wgraj nowe (z pliku):</label>
                 <input type="file" name="imageFile" class="form-control" accept="image/*">
+
                 <div class="text-center my-2">- LUB -</div>
+
                 <label class="form-label small">Link do zdjęcia:</label>
-                <input type="text" name="imageUrl" th:value="*{imageUrl}" class="form-control form-control-sm">
+                <input type="text" th:field="*{imageUrl}" class="form-control form-control-sm">
             </div>
 
             <div class="d-flex gap-2">

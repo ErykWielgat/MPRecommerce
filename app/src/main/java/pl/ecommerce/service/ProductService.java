@@ -16,13 +16,15 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Service // Mówi Springowi: To jest serwis, trzymaj go w pamięci
-@RequiredArgsConstructor // To jest kluczowe! Lombok generuje konstruktor dla pól 'final'. To zastępuje @Autowired.
+@Service
+@RequiredArgsConstructor
 public class ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final pl.ecommerce.repository.ReviewRepository reviewRepository;
+
+    private final pl.ecommerce.dao.ProductJdbcDao productJdbcDao;
 
     // Pobieranie wszystkich produktów
     public List<ProductDto> getAllProducts() {
@@ -38,13 +40,13 @@ public class ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Nie znaleziono produktu o id: " + id));
         return mapToDto(product);
     }
+
     public Page<ProductDto> getAllProductsPaged(Pageable pageable) {
         return productRepository.findAll(pageable)
-                .map(this::mapToDto); // .map() na obiekcie Page automatycznie konwertuje elementy
+                .map(this::mapToDto);
     }
 
-    // Tworzenie produktu (Modyfikacja danych wymaga @Transactional)
-    // Metoda obsługująca zarówno TWORZENIE (id null) jak i EDYCJĘ (id istnieje)
+    // Tworzenie produktu
     @Transactional
     public ProductDto createProduct(ProductDto productDto) {
         Product product;
@@ -66,7 +68,7 @@ public class ProductService {
             product.setImageUrl(productDto.getImageUrl());
         }
 
-        // --- ZMIANA: Obsługa Kategorii ---
+        // ---  Obsługa Kategorii ---
         Category category;
 
         // A. Czy użytkownik wpisał nazwę nowej kategorii?
@@ -91,7 +93,7 @@ public class ProductService {
         }
 
         product.setCategory(category);
-        // --------------------------------
+
 
         Product savedProduct = productRepository.save(product);
         return mapToDto(savedProduct);
@@ -105,14 +107,11 @@ public class ProductService {
         dto.setPrice(product.getPrice());
         dto.setImageUrl(product.getImageUrl());
         dto.setCategoryId(product.getCategory().getId());
-
-        // --- NOWE: Przepisujemy stan do DTO ---
         dto.setStock(product.getStock());
-        // --------------------------------------
-
         return dto;
     }
 
+    //Rollback
     @Transactional
     public void decreaseStock(Long productId, int quantityToDecrease) {
         Product product = productRepository.findById(productId)
@@ -129,31 +128,42 @@ public class ProductService {
     // Metoda do dodawania opinii
     @Transactional
     public void addReview(Long productId, String author, String content, int rating) {
+        // 1. Pobierz produkt
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Produkt nie istnieje"));
 
+        // 2. Stwórz i zapisz nową opinię
         Review review = new Review();
         review.setAuthorName(author);
         review.setContent(content);
         review.setRating(rating);
         review.setProduct(product);
-
         reviewRepository.save(review);
+       // 3. Odśwież listę opinii produktu
+        product.getReviews().add(review);
+
+        // 4. Policz nową średnią
+        double newAverage = product.getReviews().stream()
+                .mapToInt(Review::getRating)
+                .average()
+                .orElse(0.0);
+
+        // 5. Zapisz nową średnią w Produkcie
+        product.setAverageRating(newAverage);
+        productRepository.save(product);
     }
 
-    // Metoda pomocnicza: Pobiera "surowy" produkt (encję) dla widoku szczegółów
-    // (Wcześniej mieliśmy tylko DTO, ale do widoku Thymeleaf wygodniej czasem wziąć encję,
-    // żeby mieć łatwy dostęp do listy opinii, chociaż profesjonalnie powinno się mapować wszystko na DTO)
     public Product getProductEntity(Long id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Nie znaleziono produktu"));
     }
+
     public List<ProductDto> filterProducts(Long categoryId, BigDecimal minPrice, BigDecimal maxPrice, String name, String sortField, String sortDir) {
-        // 1. Ustalanie kierunku sortowania (rosnąco/malejąco)
+        // 1. Ustalanie kierunku sortowania
         org.springframework.data.domain.Sort.Direction direction =
                 "desc".equalsIgnoreCase(sortDir) ? org.springframework.data.domain.Sort.Direction.DESC : org.springframework.data.domain.Sort.Direction.ASC;
 
-        // 2. Ustalanie po czym sortujemy (domyślnie po nazwie)
+        // 2. Ustalanie po czym sortujemy
         String actualSortField = (sortField != null && !sortField.isEmpty()) ? sortField : "name";
 
         // 3. Wywołanie "inteligentnego zapytania" z repozytorium
@@ -165,6 +175,7 @@ public class ProductService {
         // 4. Zamiana na DTO
         return products.stream().map(this::mapToDto).collect(Collectors.toList());
     }
+
     @Transactional
     public void deleteProduct(Long id) {
         if (!productRepository.existsById(id)) {
@@ -173,4 +184,32 @@ public class ProductService {
         productRepository.deleteById(id);
     }
 
+    //  Pobieranie wszystkich opinii
+    public List<Review> getAllReviews() {
+        return reviewRepository.findAll();
+    }
+
+    //  Usuwanie opinii
+    @Transactional
+    public void deleteReview(Long reviewId) {
+        reviewRepository.deleteById(reviewId);
+
+    }
+
+    // 1. Metoda searchProducts zwracająca Page (
+    public Page<ProductDto> searchProducts(String name, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable) {
+       return productRepository.searchProducts(categoryId, minPrice, maxPrice, name, pageable)
+                .map(this::mapToDto);
+    }
+
+    // 2. Metoda raportowa (delegacja do JDBC)
+    public List<pl.ecommerce.dto.ProductPriceSummary> getExpensiveProductsReport(BigDecimal minPrice) {
+        return productJdbcDao.findProductsMoreExpensiveThan(minPrice);
+    }
+
+    // 3. Metoda aktualizacji cen (delegacja do JDBC)
+    @Transactional
+    public int bulkUpdatePrices(Long categoryId, BigDecimal amount) {
+        return productJdbcDao.updatePriceByCategory(categoryId, amount);
+    }
 }

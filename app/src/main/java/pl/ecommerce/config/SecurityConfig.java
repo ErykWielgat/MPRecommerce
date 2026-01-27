@@ -17,19 +17,27 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Wyłączamy CSRF dla ułatwienia (API/Postman)
+                .csrf(csrf -> csrf.disable()) // Wyłączone dla ułatwienia testów API
                 .authorizeHttpRequests(auth -> auth
-                        // 1. NAJWAŻNIEJSZE: Specyficzne reguły na samym początku!
+                        // 1. ENDPOINTY PUBLICZNE
+                        .requestMatchers(
+                                "/",                // Strona główna
+                                "/api/**",          // REST API
+                                "/product/**",      // Szczegóły produktu
+                                "/cart/**",         // Koszyk
+                                "/order/**",        // Składanie zamówienia
+                                "/order/**",        // Proces zamawiania
+                                "/css/**",          // Style
+                                "/js/**",           // Skrypty
+                                "/uploads/**",      // Zdjęcia produktów
+                                "/login"            // Strona logowania
+                        ).permitAll()
 
-
-                        // Nasze REST API (też publiczne)
-                        .requestMatchers("/api/**").permitAll()
-
-                        // Panel Admina (tylko dla admina)
+                        // 2. ENDPOINTY SPECYFICZNE (Tylko dla Administratora)
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
-                        // 2. SZLABAN: To musi być OSTATNIA linia w tej sekcji
-                        .anyRequest().permitAll()
+                        // 3. RESZTA CHRONIONA
+                        .anyRequest().authenticated()
                 )
                 .formLogin(login -> login
                         .defaultSuccessUrl("/admin", true)

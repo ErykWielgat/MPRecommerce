@@ -5,12 +5,12 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 
-@Data // Lombok: tworzy gettery, settery, toString
+@Data
 public class ProductDto {
 
-    private Long id; // ID odsyłamy klientowi, ale przy tworzeniu będzie puste
+    private Long id;
 
-    @NotBlank(message = "Nazwa produktu jest wymagana") // Nie może być null ani puste ""
+    @NotBlank(message = "Nazwa produktu jest wymagana")
     @Size(min = 3, max = 100, message = "Nazwa musi mieć od 3 do 100 znaków")
     private String name;
 
@@ -24,6 +24,6 @@ public class ProductDto {
     private String imageUrl;
 
     @NotNull(message = "Kategoria jest wymagana")
-    private Long categoryId; // Klient podaje tylko ID kategorii, np. 5 (Elektronika)
+    private Long categoryId;
     private String newCategoryName;
 }

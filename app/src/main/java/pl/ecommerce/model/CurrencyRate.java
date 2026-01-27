@@ -15,9 +15,9 @@ public class CurrencyRate {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String currencyCode; // np. "USD"
+    private String currencyCode;
 
-    private Double rate;         // np. 4.05
+    private Double rate;
 
-    private LocalDate fetchDate; // Data pobrania kursu
+    private LocalDate fetchDate;
 }

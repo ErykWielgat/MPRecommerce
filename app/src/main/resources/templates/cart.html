@@ -41,7 +41,17 @@
                     </div>
                 </td>
                 <td th:text="${item.price} + ' PLN'">Cena</td>
-                <td th:text="${item.quantity}">1</td>
+                <td style="width: 140px;">
+                    <form action="/cart/update" method="post">
+                        <input type="hidden" name="productId" th:value="${item.productId}">
+
+                        <input type="number" name="quantity"
+                               th:value="${item.quantity}"
+                               min="1"
+                               onchange="this.form.submit()"
+                               class="form-control form-control-sm text-center">
+                    </form>
+                </td>
                 <td th:text="${item.getTotalPrice()} + ' PLN'" class="fw-bold">Suma</td>
                 <td>
                     <a th:href="@{'/cart/remove/' + ${item.productId}}" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i> Usuń</a>

@@ -5,6 +5,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import pl.ecommerce.dto.ProductDto;
 import pl.ecommerce.exception.ResourceNotFoundException;
@@ -33,7 +36,11 @@ class ProductServiceTest {
     private CategoryRepository categoryRepository;
 
     @Mock
-    private ReviewRepository reviewRepository; // Dodane, bo serwis tego używa
+    private ReviewRepository reviewRepository;
+
+    // DODANE: Mock dla JDBC Dao (wymagany do pokrycia metod raportowych)
+    @Mock
+    private pl.ecommerce.dao.ProductJdbcDao productJdbcDao;
 
     @InjectMocks
     private ProductService productService;
@@ -85,7 +92,26 @@ class ProductServiceTest {
         assertThrows(ResourceNotFoundException.class, () -> productService.getProductById(99L));
     }
 
-    // --- 2. TESTY TWORZENIA I EDYCJI (CREATE / UPDATE) - Kluczowe dla Branches! ---
+    // ---  Paginacja wszystkich produktów ---
+    @Test
+    void shouldGetAllProductsPaged() {
+        // given
+        Pageable pageable = Pageable.unpaged();
+        Category cat = new Category();
+        cat.setId(1L);
+        Product p = new Product();
+        p.setCategory(cat);
+
+        when(productRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(p)));
+
+        // when
+        var result = productService.getAllProductsPaged(pageable);
+
+        // then
+        assertEquals(1, result.getTotalElements());
+    }
+
+    // --- 2. TESTY TWORZENIA I EDYCJI (CREATE / UPDATE)
 
     @Test
     void shouldCreateProductWithNewCategory() {
@@ -93,7 +119,7 @@ class ProductServiceTest {
         ProductDto dto = new ProductDto();
         dto.setName("Nowy z nową kategorią");
         dto.setPrice(BigDecimal.TEN);
-        dto.setNewCategoryName("Super Nowa"); // <--- Testujemy nową funkcję
+        dto.setNewCategoryName("Super Nowa");
 
         when(categoryRepository.findByName("Super Nowa")).thenReturn(Optional.empty()); // Nie ma takiej w bazie
         when(categoryRepository.save(any(Category.class))).thenAnswer(inv -> {
@@ -111,9 +137,62 @@ class ProductServiceTest {
         assertEquals("Nowy z nową kategorią", result.getName());
     }
 
+    // ---  Tworzenie produktu z nową kategorią, która jednak już istnieje w bazie (Branch coverage) ---
+    @Test
+    void shouldCreateProductWithExistingNewCategoryName() {
+        // given
+        ProductDto dto = new ProductDto();
+        dto.setNewCategoryName("Istniejąca Kategoria");
+        dto.setPrice(BigDecimal.ONE);
+
+        Category existingCat = new Category();
+        existingCat.setId(100L);
+        existingCat.setName("Istniejąca Kategoria");
+
+        when(categoryRepository.findByName("Istniejąca Kategoria")).thenReturn(Optional.of(existingCat));
+        when(productRepository.save(any(Product.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // when
+        ProductDto result = productService.createProduct(dto);
+
+        // then
+        assertEquals(100L, result.getCategoryId());
+        verify(categoryRepository, never()).save(any(Category.class)); // Nie powinien zapisywać nowej kategorii
+    }
+
+    // ---  Tworzenie produktu - domyślny stock (Branch coverage dla stock == null) ---
+    @Test
+    void shouldSetDefaultStockToZeroWhenNull() {
+        // given
+        ProductDto dto = new ProductDto();
+        dto.setCategoryId(1L);
+        dto.setStock(null); // Explicit null
+
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(new Category()));
+        when(productRepository.save(any(Product.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // when
+        ProductDto result = productService.createProduct(dto);
+
+        // then
+        assertEquals(0, result.getStock());
+    }
+
+    // ---  Tworzenie produktu - brak kategorii ID i brak nowej nazwy (Branch coverage) ---
+    @Test
+    void shouldThrowExceptionWhenNoCategoryProvided() {
+        // given
+        ProductDto dto = new ProductDto();
+        dto.setCategoryId(null);
+        dto.setNewCategoryName(null); // lub pusty string
+
+        // when & then
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> productService.createProduct(dto));
+        assertEquals("Musisz wybrać kategorię z listy lub wpisać nową nazwę!", ex.getMessage());
+    }
+
     @Test
     void shouldUpdateExistingProduct() {
-        // given - ID NIE JEST NULL (edycja)
         ProductDto dto = new ProductDto();
         dto.setId(5L); // Istniejące ID
         dto.setName("Zaktualizowana nazwa");
@@ -145,17 +224,16 @@ class ProductServiceTest {
 
     @Test
     void shouldNotUpdateImageIfUrlIsEmpty() {
-        // Pokrycie brancha: if (productDto.getImageUrl() != null && !isEmpty())
 
         // given
         ProductDto dto = new ProductDto();
         dto.setId(5L);
         dto.setCategoryId(1L);
-        dto.setImageUrl(""); // Pusty ciąg znaków!
+        dto.setImageUrl("");
 
         Product existingProduct = new Product();
         existingProduct.setId(5L);
-        existingProduct.setImageUrl("stare_wazne_foto.jpg"); // To powinno zostać
+        existingProduct.setImageUrl("stare_wazne_foto.jpg");
 
         when(productRepository.findById(5L)).thenReturn(Optional.of(existingProduct));
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(new Category()));
@@ -165,14 +243,14 @@ class ProductServiceTest {
         ProductDto result = productService.createProduct(dto);
 
         // then
-        assertEquals("stare_wazne_foto.jpg", result.getImageUrl()); // Nie powinno się zmienić na puste!
+        assertEquals("stare_wazne_foto.jpg", result.getImageUrl());
     }
 
     @Test
     void shouldThrowExceptionWhenUpdatingNonExistentProduct() {
         // given
         ProductDto dto = new ProductDto();
-        dto.setId(999L); // Nie ma takiego
+        dto.setId(999L);
 
         when(productRepository.findById(999L)).thenReturn(Optional.empty());
 
@@ -211,7 +289,25 @@ class ProductServiceTest {
                 () -> productService.addReview(1L, "Jan", "Opis", 5));
     }
 
-    // --- 4. TESTY FILTROWANIA I SORTOWANIA (Branches: ternary operators) ---
+    // ---  Pobieranie wszystkich opinii ---
+    @Test
+    void shouldGetAllReviews() {
+        // when
+        productService.getAllReviews();
+        // then
+        verify(reviewRepository).findAll();
+    }
+
+    // ---  Usuwanie opinii ---
+    @Test
+    void shouldDeleteReview() {
+        // when
+        productService.deleteReview(10L);
+        // then
+        verify(reviewRepository).deleteById(10L);
+    }
+
+    // --- 4. TESTY FILTROWANIA I SORTOWANIA  ---
 
     @Test
     void shouldFilterProductsWithDefaultSort() {
@@ -252,7 +348,108 @@ class ProductServiceTest {
                 eq(Sort.by(Sort.Direction.DESC, "price")));
     }
 
-    // --- 5. TEST ENCJI ---
+    // ---  Paginowane wyszukiwanie (searchProducts zwracające Page) ---
+    @Test
+    void shouldSearchProductsPaged() {
+        // given
+        Pageable pageable = Pageable.unpaged();
+        Category cat = new Category(); cat.setId(1L);
+        Product p = new Product(); p.setCategory(cat);
+
+        when(productRepository.searchProducts(any(), any(), any(), any(), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of(p)));
+
+        // when
+        Page<ProductDto> result = productService.searchProducts("test", 1L, null, null, pageable);
+
+        // then
+        assertEquals(1, result.getContent().size());
+        verify(productRepository).searchProducts(eq(1L), any(), any(), eq("test"), eq(pageable));
+    }
+
+    // --- 5. TESTY USUWANIA PRODUKTU (DELETE) ---
+
+    // ---  Udane usuwanie produktu ---
+    @Test
+    void shouldDeleteProductWhenExists() {
+        // given
+        when(productRepository.existsById(1L)).thenReturn(true);
+
+        // when
+        productService.deleteProduct(1L);
+
+        // then
+        verify(productRepository).deleteById(1L);
+    }
+
+    // ---  Błąd usuwania produktu ---
+    @Test
+    void shouldThrowExceptionWhenDeletingNonExistentProduct() {
+        // given
+        when(productRepository.existsById(1L)).thenReturn(false);
+
+        // when & then
+        assertThrows(ResourceNotFoundException.class, () -> productService.deleteProduct(1L));
+        verify(productRepository, never()).deleteById(any());
+    }
+
+    // --- 6. TESTY ZMIANY STANU (DECREASE STOCK) ---
+
+    // ---  Udane zmniejszenie stanu ---
+    @Test
+    void shouldDecreaseStockSuccess() {
+        // given
+        Product p = new Product();
+        p.setId(1L);
+        p.setName("Produkt");
+        p.setStock(10);
+
+        when(productRepository.findById(1L)).thenReturn(Optional.of(p));
+
+        // when
+        productService.decreaseStock(1L, 3);
+
+        // then
+        assertEquals(7, p.getStock());
+        verify(productRepository).save(p);
+    }
+
+    // ---  Błąd: niewystarczająca ilość (brakująca gałąź if) ---
+    @Test
+    void shouldThrowExceptionWhenNotEnoughStock() {
+        // given
+        Product p = new Product();
+        p.setId(1L);
+        p.setStock(2);
+
+        when(productRepository.findById(1L)).thenReturn(Optional.of(p));
+
+        // when & then
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> productService.decreaseStock(1L, 5));
+        assertTrue(ex.getMessage().contains("Niewystarczająca ilość"));
+    }
+
+    // --- 7. TESTY JDBC (DAO) ---
+
+    // ---  Raport drogich produktów ---
+    @Test
+    void shouldGetExpensiveProductsReport() {
+        // when
+        productService.getExpensiveProductsReport(BigDecimal.TEN);
+        // then
+        verify(productJdbcDao).findProductsMoreExpensiveThan(BigDecimal.TEN);
+    }
+
+    // ---  Masowa aktualizacja cen ---
+    @Test
+    void shouldBulkUpdatePrices() {
+        // when
+        productService.bulkUpdatePrices(1L, BigDecimal.valueOf(50));
+        // then
+        verify(productJdbcDao).updatePriceByCategory(1L, BigDecimal.valueOf(50));
+    }
+
+    // --- 8. TEST ENCJI ---
 
     @Test
     void shouldGetProductEntity() {

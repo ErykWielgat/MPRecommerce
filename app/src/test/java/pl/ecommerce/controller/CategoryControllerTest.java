@@ -32,14 +32,9 @@ class CategoryControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper; // Do zamiany obiektów na JSON
+    private ObjectMapper objectMapper;
 
-    // --- 1. Główny serwis testowanego kontrolera ---
-    @MockitoBean
-    private CategoryService categoryService;
-
-    // --- 2. Atrapy potrzebne do "wstania" kontekstu Springa ---
-    // (Bez nich wywali błąd ApplicationContext, bo Security/Layout ich szukają)
+    @MockitoBean private CategoryService categoryService;
     @MockitoBean private CartService cartService;
     @MockitoBean private CurrencyService currencyService;
     @MockitoBean private ProductService productService;
@@ -48,7 +43,7 @@ class CategoryControllerTest {
     @MockitoBean private NbpClient nbpClient;
 
     @Test
-    @WithMockUser // Każdy zalogowany (lub publiczny dostęp) może pobrać kategorie
+    @WithMockUser
     void shouldGetAllCategories() throws Exception {
         // given
         CategoryDto cat1 = new CategoryDto();
@@ -63,12 +58,12 @@ class CategoryControllerTest {
         mockMvc.perform(get("/api/v1/categories")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()) // 200 OK
-                .andExpect(jsonPath("$.size()").value(2)) // Czy są 2 elementy
+                .andExpect(jsonPath("$.size()").value(2))
                 .andExpect(jsonPath("$[0].name").value("Elektronika"));
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN") // Tylko Admin może tworzyć (zazwyczaj)
+    @WithMockUser(roles = "ADMIN")
     void shouldCreateCategory() throws Exception {
         // given
         CategoryDto inputDto = new CategoryDto();
@@ -82,10 +77,10 @@ class CategoryControllerTest {
 
         // when & then
         mockMvc.perform(post("/api/v1/categories")
-                        .with(csrf()) // Wymagane przy metodach POST/PUT/DELETE
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(inputDto))) // Java Object -> JSON String
-                .andExpect(status().isCreated()) // 201 Created
+                        .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.name").value("Nowa Kategoria"));
     }

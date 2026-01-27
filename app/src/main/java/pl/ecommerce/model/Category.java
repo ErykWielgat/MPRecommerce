@@ -8,24 +8,21 @@ import lombok.Setter;
 
 import java.util.List;
 
-@Entity // 1. Mówi Hibernate'owi: "To będzie tabela w bazie danych"
-@Table(name = "categories") // 2. Nazwa tabeli w bazie to "categories"
-@Getter @Setter // 3. Lombok automatycznie generuje gettery i settery (nie musisz ich pisać)
-@NoArgsConstructor // 4. Pusty konstruktor (wymagany przez JPA)
-@AllArgsConstructor // 5. Konstruktor ze wszystkimi polami
+@Entity
+@Table(name = "categories")
+@Getter @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Category {
 
-    @Id // 6. To jest klucz główny (Primary Key)
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // 7. Baza danych sama nada kolejny numer ID (Auto Increment)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false) // 8. To pole nie może być puste w bazie
+    @Column(nullable = false)
     private String name;
 
     private String description;
-
-    // Relacja: Jedna kategoria -> Wiele produktów
-    // mappedBy = "category" oznacza, że właścicielem relacji jest pole 'category' w klasie Product
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
+@OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
     private List<Product> products;
 }

@@ -4,9 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import pl.ecommerce.dto.ProductDto;
 import pl.ecommerce.model.Category;
 import pl.ecommerce.model.Product;
 import pl.ecommerce.repository.CategoryRepository;
@@ -22,7 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest // Uruchamia CAŁĄ aplikację (Baza H2, Security, Serwisy...)
+@SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
 class EcommercePlatformApplicationTests {
@@ -47,7 +45,7 @@ class EcommercePlatformApplicationTests {
         p.setName("Laptop Testowy");
         p.setPrice(new BigDecimal("2500.00"));
         p.setDescription("Super laptop");
-        p.setStock(10);// (Ustawiamy stan magazynowy)
+        p.setStock(10);
         p.setCategory(cat);
         productRepository.save(p);
 
@@ -61,7 +59,7 @@ class EcommercePlatformApplicationTests {
         mockMvc.perform(get("/product/" + p.getId()))
                 .andExpect(status().isOk());
 
-        // 4. DODANIE DO KOSZYKA I... POBRANIE SESJI!
+        // 4. DODANIE DO KOSZYKA I POBRANIE SESJI!
         var result = mockMvc.perform(get("/cart/add/" + p.getId())
                         .header("Referer", "/"))
                 .andExpect(status().is3xxRedirection())

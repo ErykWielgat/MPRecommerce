@@ -17,13 +17,13 @@ public class Review {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String authorName; // Np. "Anonim" lub imię usera
+    private String authorName;
 
     @Column(nullable = false)
-    private String content; // Treść opinii
+    private String content;
 
     @Column(nullable = false)
-    private int rating; // Ocena 1-5
+    private int rating;
 
     // Relacja: Wiele opinii do jednego produktu
     @ManyToOne(fetch = FetchType.LAZY)

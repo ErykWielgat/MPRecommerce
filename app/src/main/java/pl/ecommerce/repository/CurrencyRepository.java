@@ -6,6 +6,5 @@ import java.util.Optional;
 
 public interface CurrencyRepository extends JpaRepository<CurrencyRate, Long> {
 
-    // Spring Data automatycznie wygeneruje zapytanie SQL: SELECT * FROM ... WHERE currency_code = ?
     Optional<CurrencyRate> findByCurrencyCode(String currencyCode);
 }

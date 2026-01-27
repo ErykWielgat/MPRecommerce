@@ -37,7 +37,6 @@ class CurrencyServiceTest {
     @Test
     void shouldCalculatePriceInForeignCurrency() {
         // given
-        // Symulujemy, że w bazie jest kurs USD = 4.00
         CurrencyRate rate = new CurrencyRate();
         rate.setCurrencyCode("USD");
         rate.setRate(4.00);
@@ -119,7 +118,6 @@ class CurrencyServiceTest {
         currencyService.checkAndRefreshRates();
 
         // then
-        // NBP nie powinno być pytane, ani baza czyszczona
         verify(nbpClient, never()).getOfficialRates();
         verify(currencyRepository, never()).deleteAll();
     }

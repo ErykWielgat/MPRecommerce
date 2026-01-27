@@ -6,7 +6,16 @@ spring:
     password:
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  # Konfiguracja inicjalizacji SQL
+  sql:
+    init:
+      mode: always
+
   jpa:
+    # TO JEST NAJWAŻNIEJSZE: Musi być dokładnie na tym poziomie wcięcia (pod 'jpa')
+    # Opóźnia wykonanie data.sql do momentu, aż Hibernate stworzy tabele
+    defer-datasource-initialization: true
+
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
       ddl-auto: update

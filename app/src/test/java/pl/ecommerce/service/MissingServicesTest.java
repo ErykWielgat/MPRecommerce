@@ -38,7 +38,6 @@ class MissingServicesTest {
         // then
         assertNotNull(path);
         assertTrue(path.contains("test.jpg"));
-        // Sprzątanie po teście (usuń plik, jeśli się utworzył fizycznie)
     }
 
     // --- TESTY CATEGORY SERVICE ---

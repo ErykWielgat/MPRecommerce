@@ -13,7 +13,6 @@ import java.util.UUID;
 @Service
 public class ImageService {
 
-    // Folder, gdzie będą zdjęcia (stworzy się w folderze projektu)
     private final String UPLOAD_DIR = "src/main/resources/static/uploads/";
 
     public String saveImage(MultipartFile file) {
@@ -37,7 +36,7 @@ public class ImageService {
             // Zwracamy ścieżkę do użycia w HTML (od katalogu static)
             return "/uploads/" + fileName;
         } catch (IOException e) {
-            e.printStackTrace(); // W prawdziwym projekcie logujemy błąd
+            e.printStackTrace();
             return null;
         }
     }

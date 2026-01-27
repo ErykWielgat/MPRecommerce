@@ -43,7 +43,7 @@ class ProductControllerTest {
     @MockitoBean private CartService cartService;
     @MockitoBean private CurrencyService currencyService;
 
-    // --- 1. POPRAWIONY TEST PAGINACJI ---
+    // --- 1. TEST PAGINACJI ---
     @Test
     @WithMockUser
     void shouldGetAllProductsPaged() throws Exception {
@@ -52,17 +52,19 @@ class ProductControllerTest {
         dto.setName("RestTest");
         dto.setPrice(BigDecimal.valueOf(100));
 
-        // Teraz kontroler zwraca Page<ProductDto>, więc musimy zamockować PageImpl
-        // PageImpl to implementacja interfejsu Page
-        when(productService.getAllProductsPaged(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(dto)));
+        when(productService.searchProducts(
+                any(), // name
+                any(), // categoryId
+                any(), // minPrice
+                any(), // maxPrice
+                any(Pageable.class) // pageable
+        )).thenReturn(new PageImpl<>(List.of(dto)));
 
         // when & then
         mockMvc.perform(get("/api/v1/products")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
-                // ZMIANA: Teraz lista jest w polu "content", a nie w głównym korzeniu
                 .andExpect(jsonPath("$.content.size()").value(1))
                 .andExpect(jsonPath("$.content[0].name").value("RestTest"));
     }

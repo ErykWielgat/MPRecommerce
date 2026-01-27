@@ -11,11 +11,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-@Repository // Mówi Springowi: to jest komponent dostępu do danych
+@Repository
 @RequiredArgsConstructor
 public class ProductJdbcDao {
 
-    private final JdbcTemplate jdbcTemplate; // To jest nasze narzędzie do czystego SQL
+    private final JdbcTemplate jdbcTemplate;
 
     // WYMAGANIE 1: SELECT z query() i RowMapper
     // Pobiera produkty droższe niż podana kwota
@@ -39,7 +39,6 @@ public class ProductJdbcDao {
     }
 
     // WYMAGANIE 2: Operacje UPDATE z update()
-    // Masowa podwyżka/obniżka cen o konkretną wartość dla danej kategorii
     public int updatePriceByCategory(Long categoryId, BigDecimal amountToAdd) {
         String sql = "UPDATE products SET price = price + ? WHERE category_id = ?";
 
@@ -47,11 +46,4 @@ public class ProductJdbcDao {
         return jdbcTemplate.update(sql, amountToAdd, categoryId);
     }
 
-    // WYMAGANIE 3: INSERT (Dodatkowe, np. prosty log operacji - zrobimy symulację)
-    // Normalnie inserty robimy przez JPA, ale tu pokażemy, że się da
-    public void insertSimpleProductAudit(String action) {
-        // Zakładamy, że nie mamy tabeli audit, więc to tylko przykład metody
-        // String sql = "INSERT INTO audit_logs (action, timestamp) VALUES (?, NOW())";
-        // jdbcTemplate.update(sql, action);
-    }
 }

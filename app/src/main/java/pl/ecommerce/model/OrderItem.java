@@ -16,9 +16,9 @@ public class OrderItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long productId; // Zapisujemy ID, żeby wiedzieć co to było
-    private String productName; // Zapisujemy nazwę (gdyby produkt usunięto ze sklepu, w zamówieniu musi zostać nazwa)
-    private BigDecimal price; // Cena W MOMENCIE ZAKUPU (ważne!)
+    private Long productId;
+    private String productName;
+    private BigDecimal price;
     private int quantity;
 
     @ManyToOne

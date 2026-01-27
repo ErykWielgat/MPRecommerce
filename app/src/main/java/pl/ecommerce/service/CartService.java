@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-@SessionScope // To sprawia, że każdy user ma swój własny koszyk!
+@SessionScope
 @RequiredArgsConstructor
 public class CartService {
 
@@ -42,6 +42,22 @@ public class CartService {
                     1,
                     product.getImageUrl()
             ));
+        }
+    }
+    public void updateQuantity(Long productId, int newQuantity) {
+        Optional<CartItem> itemOpt = cartItems.stream()
+                .filter(item -> item.getProductId().equals(productId))
+                .findFirst();
+
+        if (itemOpt.isPresent()) {
+            CartItem item = itemOpt.get();
+            // Jeśli użytkownik wpisze 0 lub mniej -> usuń produkt
+            if (newQuantity <= 0) {
+                cartItems.remove(item);
+            } else {
+                // W przeciwnym razie zaktualizuj ilość
+                item.setQuantity(newQuantity);
+            }
         }
     }
 
@@ -99,7 +115,7 @@ public class CartService {
             orderItem.setProductName(cartItem.getName());
             orderItem.setPrice(cartItem.getPrice());
             orderItem.setQuantity(cartItem.getQuantity());
-            orderItem.setOrder(order); // Ustawienie relacji
+            orderItem.setOrder(order);
             items.add(orderItem);
         }
         order.setOrderItems(items);
@@ -109,5 +125,6 @@ public class CartService {
 
         // WYCZYSZCZENIE KOSZYKA PO ZAKUPIE
         clearCart();
+
     }
 }

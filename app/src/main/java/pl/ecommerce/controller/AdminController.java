@@ -7,8 +7,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import pl.ecommerce.dto.ProductDto;
 import pl.ecommerce.model.Product;
-import pl.ecommerce.repository.ProductRepository;
-import pl.ecommerce.repository.ReviewRepository;
 import pl.ecommerce.service.CategoryService;
 import pl.ecommerce.service.ImageService;
 import pl.ecommerce.service.ProductService;
@@ -18,22 +16,19 @@ import pl.ecommerce.service.ProductService;
 @RequiredArgsConstructor
 public class AdminController {
 
+
     private final ProductService productService;
-    private final ProductRepository productRepository; // Do usuwania/edycji bezpośredniej
     private final CategoryService categoryService;
-    private final ReviewRepository reviewRepository;
     private final ImageService imageService;
 
-    // USUNIĘTO: CurrencyService - admin nie musi już tym zarządzać ręcznie
-
-    // 1. Dashboard (Lista produktów)
+    // 1. Dashboard
     @GetMapping
     public String adminDashboard(Model model) {
         model.addAttribute("products", productService.getAllProducts());
         return "admin/dashboard";
     }
 
-    // 2. Formularz dodawania produktu
+    // 2. Formularz dodawania
     @GetMapping("/products/add")
     public String showAddProductForm(Model model) {
         model.addAttribute("productDto", new ProductDto());
@@ -41,17 +36,14 @@ public class AdminController {
         return "admin/product-form";
     }
 
-    // 3. Zapisywanie produktu (z plikiem!)
+    // 3. Zapisywanie
     @PostMapping("/products/save")
     public String saveProduct(@ModelAttribute ProductDto productDto,
                               @RequestParam("imageFile") MultipartFile imageFile) {
-
-        // Jeśli przesłano plik, zapisz go i ustaw URL
         if (!imageFile.isEmpty()) {
             String imageUrl = imageService.saveImage(imageFile);
             productDto.setImageUrl(imageUrl);
         }
-
         productService.createProduct(productDto);
         return "redirect:/admin";
     }
@@ -59,62 +51,53 @@ public class AdminController {
     // 4. Usuwanie produktu
     @GetMapping("/products/delete/{id}")
     public String deleteProduct(@PathVariable Long id) {
-        productRepository.deleteById(id);
+        productService.deleteProduct(id);
         return "redirect:/admin";
     }
 
-    // 5. Moderacja Opinii (Lista wszystkich opinii)
-    @GetMapping("/reviews")
-    public String manageReviews(Model model) {
-        model.addAttribute("reviews", reviewRepository.findAll());
-        return "admin/reviews";
-    }
-
-    // 6. Usuwanie Opinii (Moderacja)
-    @GetMapping("/reviews/delete/{id}")
-    public String deleteReview(@PathVariable Long id) {
-        reviewRepository.deleteById(id);
-        return "redirect:/admin/reviews";
-    }
-
-    // --- EDYCJA PRODUKTU ---
+    // 5. Edycja
     @GetMapping("/products/edit/{id}")
     public String showEditForm(@PathVariable Long id, Model model) {
-        // 1. Pobieramy encję
         Product product = productService.getProductEntity(id);
-
-        // 2. Mapujemy ręcznie na DTO, żeby formularz się wypełnił
         ProductDto dto = new ProductDto();
         dto.setId(product.getId());
         dto.setName(product.getName());
         dto.setDescription(product.getDescription());
         dto.setPrice(product.getPrice());
+        dto.setStock(product.getStock());
         dto.setCategoryId(product.getCategory().getId());
         dto.setImageUrl(product.getImageUrl());
-        dto.setStock(product.getStock());
 
         model.addAttribute("productDto", dto);
         model.addAttribute("categories", categoryService.getAllCategories());
-
-        // Używamy tego samego formularza co do dodawania
         return "admin/product-form";
     }
 
-    // --- SZCZEGÓŁY DLA ADMINA (Z USUWANIEM OPINII) ---
+    // 6. Lista opinii
+    @GetMapping("/reviews")
+    public String manageReviews(Model model) {
+        model.addAttribute("reviews", productService.getAllReviews()); // <--- ZMIANA
+        return "admin/reviews";
+    }
+
+    // 7. Usuwanie opinii
+    @GetMapping("/reviews/delete/{id}")
+    public String deleteReview(@PathVariable Long id) {
+        productService.deleteReview(id); // <--- ZMIANA
+        return "redirect:/admin/reviews";
+    }
+
+    // 8. Szczegóły produktu
     @GetMapping("/product/{id}")
     public String adminProductDetails(@PathVariable Long id, Model model) {
-        Product product = productService.getProductEntity(id);
-        model.addAttribute("product", product);
-        return "admin/product-details"; // Nowy widok specjalnie dla admina
+        model.addAttribute("product", productService.getProductEntity(id));
+        return "admin/product-details";
     }
 
-    // Metoda do usuwania opinii z poziomu widoku produktu
+    // 9. Usuwanie opinii z widoku produktu
     @GetMapping("/product/{productId}/delete-review/{reviewId}")
     public String deleteReviewFromProduct(@PathVariable Long productId, @PathVariable Long reviewId) {
-        reviewRepository.deleteById(reviewId);
-        // Po usunięciu wracamy na stronę TEGO SAMEGO produktu
+        productService.deleteReview(reviewId); // <--- ZMIANA
         return "redirect:/admin/product/" + productId;
     }
-
-    // USUNIĘTO: Metody currencies (show i update)
 }

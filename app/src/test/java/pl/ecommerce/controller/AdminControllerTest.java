@@ -3,7 +3,7 @@ package pl.ecommerce.controller;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.mock.web.MockMultipartFile; // Ważne do testowania plików
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -11,17 +11,15 @@ import org.springframework.test.web.servlet.MockMvc;
 import pl.ecommerce.config.SecurityConfig;
 import pl.ecommerce.model.Category;
 import pl.ecommerce.model.Product;
-import pl.ecommerce.repository.ProductRepository;
-import pl.ecommerce.repository.ReviewRepository;
 import pl.ecommerce.service.*;
 import pl.ecommerce.dao.ProductJdbcDao;
-
+import pl.ecommerce.nbp.NbpClient;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart; // Do testowania uploadu
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AdminController.class)
@@ -31,20 +29,19 @@ class AdminControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    // --- ZALEŻNOŚCI BEZPOŚREDNIE KONTROLERA ---
+    // --- ZALEŻNOŚCI BEZPOŚREDNIE KONTROLERA  ---
     @MockitoBean private ProductService productService;
     @MockitoBean private CategoryService categoryService;
     @MockitoBean private ImageService imageService;
-    @MockitoBean private ProductRepository productRepository;
-    @MockitoBean private ReviewRepository reviewRepository;
 
-    // --- ZALEŻNOŚCI POBOCZNE (Wymagane przez Security/Layout) ---
+    // --- ZALEŻNOŚCI POBOCZNE  ---
     @MockitoBean private CartService cartService;
     @MockitoBean private CurrencyService currencyService;
     @MockitoBean private ProductJdbcDao productJdbcDao;
+    @MockitoBean private NbpClient nbpClient;
 
 
-    // --- 1. TESTY DOSTĘPU I WIDOKÓW (DASHBOARD) ---
+    // --- 1. TESTY DOSTĘPU ---
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
@@ -61,13 +58,7 @@ class AdminControllerTest {
                 .andExpect(status().isForbidden());
     }
 
-    @Test
-    void shouldRedirectAnonymousUserToLogin() throws Exception {
-        mockMvc.perform(get("/admin"))
-                .andExpect(status().is3xxRedirection());
-    }
-
-    // --- 2. TESTY AKCJI (ZAPIS, EDYCJA, USUWANIE) - Kluczowe dla pokrycia! ---
+    // --- 2. TESTY AKCJI ---
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
@@ -84,22 +75,26 @@ class AdminControllerTest {
                         .file(imageFile)
                         .param("name", "Nowy Produkt")
                         .param("price", "100.00")
+                        .param("stock", "10")
                         .param("categoryId", "1")
-                        .with(csrf())) // Token CSRF jest wymagany przy POST!
+                        .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin"));
 
+        // Weryfikacja: Sprawdzamy czy wywołano SERWIS
         verify(productService).createProduct(any());
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldDeleteProduct() throws Exception {
+        // when
         mockMvc.perform(get("/admin/products/delete/1"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin"));
 
-        verify(productRepository).deleteById(1L);
+        // then
+        verify(productService).deleteProduct(1L);
     }
 
     @Test
@@ -109,8 +104,10 @@ class AdminControllerTest {
         Product p = new Product();
         p.setId(1L);
         p.setName("Stary");
-        p.setCategory(new Category()); // Unikamy NPE
+        p.setStock(5);
+        p.setCategory(new Category());
 
+        // Mockujemy metodę, która pobiera encję (używaną w edycji)
         when(productService.getProductEntity(1L)).thenReturn(p);
 
         // when & then

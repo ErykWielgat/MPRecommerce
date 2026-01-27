@@ -25,7 +25,6 @@ public class CurrencyService {
         List<NbpRateDto> rates = nbpClient.getOfficialRates();
         if (rates.isEmpty()) return;
 
-        // Usuwamy stare, żeby nie robić śmietnika
         currencyRepository.deleteAll();
 
         for (NbpRateDto dto : rates) {
@@ -37,15 +36,14 @@ public class CurrencyService {
         }
     }
 
-    // --- METODA 2: Zwraca jeden konkretny kurs (bezpiecznie) ---
-    // Tego Ci brakowało do wyświetlania na stronie głównej!
+    // --- METODA 2: Zwraca jeden konkretny kurs  ---
     public BigDecimal getRate(String currencyCode) {
         return currencyRepository.findByCurrencyCode(currencyCode)
                 .map(rate -> BigDecimal.valueOf(rate.getRate())) // Zamiana double na BigDecimal
                 .orElse(BigDecimal.ZERO); // Jak nie znajdzie, zwraca 0 (żeby nie było błędu)
     }
 
-    // --- METODA 3: Sprawdza czy trzeba odświeżyć (Inteligentna) ---
+    // --- METODA 3: Sprawdza czy trzeba odświeżyć  ---
     @Transactional
     public void checkAndRefreshRates() {
         // 1. Pobierz wszystkie dzisiejsze kursy z bazy
@@ -53,7 +51,6 @@ public class CurrencyService {
                 .filter(r -> r.getFetchDate().equals(LocalDate.now()))
                 .toList();
 
-        // 2. Sprawdź, czy mamy te, na których nam zależy
         boolean hasUsd = todayRates.stream().anyMatch(r -> r.getCurrencyCode().equals("USD"));
         boolean hasEur = todayRates.stream().anyMatch(r -> r.getCurrencyCode().equals("EUR"));
         boolean hasGbp = todayRates.stream().anyMatch(r -> r.getCurrencyCode().equals("GBP"));

@@ -60,4 +60,11 @@ public class CartController {
         cartService.removeProduct(productId);
         return "redirect:/cart";
     }
+
+    @org.springframework.web.bind.annotation.PostMapping("/cart/update")
+    public String updateCartItem(@RequestParam Long productId,
+                                 @RequestParam int quantity) {
+        cartService.updateQuantity(productId, quantity);
+        return "redirect:/cart";
+    }
 }

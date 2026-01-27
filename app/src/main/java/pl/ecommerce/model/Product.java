@@ -24,9 +24,11 @@ public class Product {
 
     private String description;
 
-    // Używamy BigDecimal do pieniędzy, bo double ma problemy z precyzją (np. 0.1 + 0.2 != 0.3)
     @Column(nullable = false)
     private BigDecimal price;
+
+    @Column(name = "average_rating")
+    private Double averageRating = 0.0;
 
     @Column(nullable = false)
     private Integer stock = 0;
@@ -36,7 +38,7 @@ public class Product {
 
     // Relacja: Wiele produktów -> Jedna kategoria
     @ManyToOne
-    @JoinColumn(name = "category_id", nullable = false) // 9. W tabeli produktów powstanie kolumna 'category_id'
+    @JoinColumn(name = "category_id", nullable = false)
     private Category category;
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private java.util.List<Review> reviews = new java.util.ArrayList<>();

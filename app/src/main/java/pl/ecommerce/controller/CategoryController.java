@@ -1,3 +1,6 @@
+/*
+ * Kontroler REST API odpowiedzialny za zarządzanie kategoriami produktów (tworzenie i pobieranie) w formacie JSON.
+ */
 package pl.ecommerce.controller;
 
 import jakarta.validation.Valid;
@@ -17,12 +20,14 @@ public class CategoryController {
 
     private final CategoryService categoryService;
 
+    // Tworzy nową kategorię w systemie na podstawie przesłanych danych JSON.
     @PostMapping
     public ResponseEntity<CategoryDto> createCategory(@Valid @RequestBody CategoryDto categoryDto) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(categoryService.createCategory(categoryDto));
     }
 
+    // Pobiera pełną listę wszystkich kategorii dostępnych w sklepie.
     @GetMapping
     public ResponseEntity<List<CategoryDto>> getAllCategories() {
         return ResponseEntity.ok(categoryService.getAllCategories());

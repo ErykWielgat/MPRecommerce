@@ -1,3 +1,6 @@
+/*
+ * Klasa konfiguracyjna dostarczająca beany pomocnicze, w tym klienta HTTP do komunikacji zewnętrznej.
+ */
 package pl.ecommerce.config;
 
 import org.springframework.context.annotation.Bean;
@@ -9,6 +12,7 @@ public class AppConfig {
 
     @Bean
     public RestTemplate restTemplate() {
+        // Tworzy klienta umożliwiającego pobieranie danych z zewnętrznych API (np. kursów walut z NBP).
         return new RestTemplate();
     }
 }

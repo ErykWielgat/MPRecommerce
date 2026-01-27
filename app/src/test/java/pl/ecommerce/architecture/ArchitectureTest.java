@@ -12,8 +12,6 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 public class ArchitectureTest {
 
     // Reguła 1: Kontrolery nie mogą bezpośrednio używać Repozytoriów (powinny iść przez Serwis)
-    // UWAGA: W Twoim kodzie AdminController używa repozytoriów, więc ten test by nie przeszedł.
-    // Zróbmy regułę, która przejdzie: "Klasy w pakiecie controller muszą mieć w nazwie 'Controller'"
     @ArchTest
     static final ArchRule controllers_should_have_controller_in_name =
             classes().that().resideInAPackage("..controller..")
@@ -31,4 +29,8 @@ public class ArchitectureTest {
     static final ArchRule model_should_not_depend_on_controllers =
             noClasses().that().resideInAPackage("..model..")
                     .should().dependOnClassesThat().resideInAPackage("..controller..");
+    @ArchTest
+    static final ArchRule controllers_should_not_depend_on_repositories =
+            noClasses().that().resideInAPackage("..controller..")
+                    .should().dependOnClassesThat().resideInAPackage("..repository..");
 }

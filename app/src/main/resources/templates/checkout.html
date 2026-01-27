@@ -2,28 +2,31 @@
 <html lang="pl" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Zamówienie</title>
+    <title>Dane do zamówienia</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
+
 <div th:if="${stockError}" class="alert alert-danger" role="alert">
     <span th:text="${stockError}">Błąd stanu magazynowego</span>
 </div>
+
 <div class="container mt-5 mb-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <h2 class="mb-4 text-center">Formularz Zamówienia</h2>
+            <h2 class="mb-4 text-center">Dane Zamówienia (Krok 1/2)</h2>
 
             <div class="card shadow no-hover">
-                <div class="card-header bg-primary text-white d-flex justify-content-between">
+                <div class="card-header bg-light d-flex justify-content-between">
                     <span>Wartość koszyka:</span>
                     <span id="base-cart-sum" th:data-base="${cartSum}" th:text="${#numbers.formatDecimal(cartSum, 1, 2)} + ' ' + ${currency}">0.00 PLN</span>
                 </div>
                 <div class="card-body">
 
-                    <form th:action="@{/order/submit}" th:object="${orderDto}" method="post">
-                        <input type="hidden" name="currencyCode" id="currencyCode" th:value="${currency}">
+                    <form th:action="@{/order/summary}" th:object="${orderDto}" method="post">
+
+                        <input type="hidden" name="currency" id="currency" th:value="${currency}">
 
                         <h5 class="mb-3">Dane odbiorcy</h5>
                         <div class="row mb-3">
@@ -52,10 +55,12 @@
                             <div class="col-md-4">
                                 <label class="form-label">Kod pocztowy</label>
                                 <input type="text" th:field="*{zipCode}" class="form-control" placeholder="00-000" th:classappend="${#fields.hasErrors('zipCode')} ? 'is-invalid'">
+                                <div class="invalid-feedback" th:errors="*{zipCode}">Błąd formatu</div>
                             </div>
                             <div class="col-md-8">
                                 <label class="form-label">Miasto</label>
                                 <input type="text" th:field="*{city}" class="form-control" th:classappend="${#fields.hasErrors('city')} ? 'is-invalid'">
+                                <div class="invalid-feedback" th:errors="*{city}">Błąd</div>
                             </div>
                         </div>
 
@@ -87,14 +92,16 @@
 
                         <div class="text-danger mb-3" th:if="${#fields.hasErrors('deliveryMethod')}" th:errors="*{deliveryMethod}">Wybierz dostawę</div>
 
-                        <div class="alert alert-info d-flex justify-content-between align-items-center mt-4">
-                            <h4 class="m-0">DO ZAPŁATY:</h4>
-                            <h3 class="m-0 fw-bold text-primary">
+                        <div class="alert alert-secondary d-flex justify-content-between align-items-center mt-4">
+                            <h5 class="m-0 text-muted">Przewidywana suma:</h5>
+                            <h3 class="m-0 fw-bold">
                                 <span id="total-price" th:text="${#numbers.formatDecimal(cartSum, 1, 2)}">0.00</span> <span th:text="${currency}">PLN</span>
                             </h3>
                         </div>
 
-                        <button type="submit" class="btn btn-success w-100 btn-lg mt-2">Zamawiam i płacę</button>
+                        <button type="submit" class="btn btn-primary w-100 btn-lg mt-2">
+                            Przejdź do podsumowania <i class="bi bi-arrow-right"></i>
+                        </button>
                     </form>
                 </div>
             </div>
@@ -109,7 +116,8 @@
         const totalPriceElement = document.getElementById('total-price');
         const deliveryRadios = document.querySelectorAll('.delivery-option');
 
-        let baseSumText = baseSumElement.getAttribute('data-base').replace(',', '.');
+        // Pobieramy wartość bazową i zamieniamy przecinek na kropkę (bezpieczeństwo dla locale PL)
+        let baseSumText = baseSumElement.getAttribute('data-base').replace(',', '.').replace(/\s/g, '');
         let baseSum = parseFloat(baseSumText);
         if (isNaN(baseSum)) baseSum = 0;
 
@@ -117,7 +125,8 @@
             let deliveryCost = 0;
             deliveryRadios.forEach(radio => {
                 if (radio.checked) {
-                    let cost = parseFloat(radio.getAttribute('data-cost').replace(',', '.'));
+                    let costText = radio.getAttribute('data-cost').replace(',', '.').replace(/\s/g, '');
+                    let cost = parseFloat(costText);
                     if (!isNaN(cost)) deliveryCost = cost;
                 }
             });
@@ -128,6 +137,7 @@
         deliveryRadios.forEach(radio => {
             radio.addEventListener('change', updateTotal);
         });
+
         updateTotal();
     });
 </script>

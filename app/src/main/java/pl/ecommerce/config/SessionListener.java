@@ -10,7 +10,7 @@ public class SessionListener implements HttpSessionListener {
 
     private final CurrencyService currencyService;
 
-    // Wstrzykujemy nasz serwis
+    // Wstrzykujemy serwis
     public SessionListener(CurrencyService currencyService) {
         this.currencyService = currencyService;
     }

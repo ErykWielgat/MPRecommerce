@@ -5,30 +5,28 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import pl.ecommerce.dto.OrderDto;
 import pl.ecommerce.model.CartItem;
 import pl.ecommerce.service.CartService;
 import pl.ecommerce.service.CurrencyService;
-import pl.ecommerce.service.ProductService; // <--- 1. DODANY IMPORT
+import pl.ecommerce.service.ProductService;
 
 import java.math.BigDecimal;
 
 @Controller
 @RequestMapping("/order")
 @RequiredArgsConstructor
+@SessionAttributes("orderDto")
 public class OrderController {
 
     private final CartService cartService;
     private final CurrencyService currencyService;
-    private final ProductService productService; // <--- 2. WSTRZYKUJEMY SERWIS
+    private final ProductService productService;
 
-    // 1. Wyświetl formularz
+    // KROK 1: Wyświetl formularz danych
     @GetMapping("/checkout")
     public String showCheckoutForm(Model model,
                                    @RequestParam(required = false, defaultValue = "PLN") String currency) {
@@ -37,61 +35,84 @@ public class OrderController {
             return "redirect:/";
         }
 
+        // Jeśli w sesji nie ma jeszcze orderDto, tworzymy nowe
+        if (!model.containsAttribute("orderDto")) {
+            model.addAttribute("orderDto", new OrderDto());
+        }
+
         prepareCheckoutModel(model, currency);
-        model.addAttribute("orderDto", new OrderDto());
         return "checkout";
     }
 
-    // 2. Przetwórz zamówienie
-    @PostMapping("/submit")
-    public String submitOrder(@Valid @ModelAttribute OrderDto orderDto,
+    // KROK 2: Walidacja i przejście do Podsumowania
+    @PostMapping("/summary")
+    public String showSummary(@Valid @ModelAttribute OrderDto orderDto,
                               BindingResult bindingResult,
-                              @RequestParam(defaultValue = "PLN") String currencyCode,
-                              Model model,
-                              RedirectAttributes redirectAttributes) {
+                              @RequestParam(defaultValue = "PLN") String currency,
+                              Model model) {
 
-        // WALIDACJA FORMULARZA
+        // 1. Walidacja danych wpisanych w checkout
         if (bindingResult.hasErrors()) {
-            prepareCheckoutModel(model, currencyCode);
+            prepareCheckoutModel(model, currency);
             return "checkout";
         }
 
-        // --- NOWA LOGIKA: Sprawdzamy dostępność towaru ---
+        // 2. Obliczenia kosztów dla podsumowania
+        BigDecimal cartTotal = cartService.getTotalSum();
+        BigDecimal deliveryCost = BigDecimal.ZERO;
+
+        if ("PACZKOMAT".equals(orderDto.getDeliveryMethod())) {
+            deliveryCost = new BigDecimal("10.00");
+        } else if ("KURIER".equals(orderDto.getDeliveryMethod())) {
+            deliveryCost = new BigDecimal("20.00");
+        }
+
+        // 3. Przeliczanie na walutę (żeby wyświetlić w podsumowaniu)
+        BigDecimal totalWithDelivery = cartTotal.add(deliveryCost);
+
+        model.addAttribute("cartItems", cartService.getCartItems());
+        model.addAttribute("cartSum", currencyService.calculatePriceInCurrency(cartTotal, currency));
+        model.addAttribute("deliveryCost", currencyService.calculatePriceInCurrency(deliveryCost, currency));
+        model.addAttribute("finalTotal", currencyService.calculatePriceInCurrency(totalWithDelivery, currency));
+        model.addAttribute("currency", currency);
+
+        return "summary"; // Idziemy do pliku summary.html
+    }
+
+    // KROK 3: Finalne zatwierdzenie i zapis (ZMODYFIKOWANA)
+    @PostMapping("/submit")
+    public String submitOrder(@ModelAttribute OrderDto orderDto,
+                              SessionStatus sessionStatus,
+                              @RequestParam(defaultValue = "PLN") String currency,
+                              RedirectAttributes redirectAttributes,
+                              Model model) {
+
+        // --- Sprawdzamy dostępność towaru (Dopiero teraz, przy ostatecznym kliknięciu) ---
         try {
-            // Iterujemy po koszyku i zdejmujemy sztuki
             for (CartItem item : cartService.getCartItems()) {
-                // Zakładam, że CartItem to 1 sztuka. Jak masz pole quantity, zmień '1' na item.getQuantity()
-                productService.decreaseStock(item.getProductId(), 1);
+                // WAŻNE: Używamy item.getQuantity(), żeby zdjąć tyle ile kupuje, a nie zawsze 1
+                productService.decreaseStock(item.getProductId(), item.getQuantity());
             }
         } catch (RuntimeException e) {
-            // JEŚLI BRAK TOWARU:
-            // 1. Dodajemy komunikat błędu do widoku
+            // Jeśli brak towaru -> Wracamy do checkoutu z błędem
             model.addAttribute("stockError", e.getMessage());
-            // 2. Przeliczamy ceny na nowo, żeby widok się nie posypał
-            prepareCheckoutModel(model, currencyCode);
-            // 3. Wracamy do formularza (nie zapisujemy zamówienia!)
+            prepareCheckoutModel(model, currency);
             return "checkout";
         }
-        // -----------------------------------------------
 
-        // --- DALSZA CZĘŚĆ TWOJEGO KODU (wykona się tylko jak towar jest dostępny) ---
+        // Obliczenie kwoty do "płatności" (dla widoku potwierdzenia)
         BigDecimal totalPln = cartService.getTotalSum();
-
-        BigDecimal deliveryCostPln = BigDecimal.ZERO;
-        if ("PACZKOMAT".equals(orderDto.getDeliveryMethod())) {
-            deliveryCostPln = new BigDecimal("10.00");
-        } else if ("KURIER".equals(orderDto.getDeliveryMethod())) {
-            deliveryCostPln = new BigDecimal("20.00");
-        }
-
-        BigDecimal totalWithDeliveryPln = totalPln.add(deliveryCostPln);
-        BigDecimal finalAmount = currencyService.calculatePriceInCurrency(totalWithDeliveryPln, currencyCode);
+        BigDecimal deliveryCost = "KURIER".equals(orderDto.getDeliveryMethod()) ? new BigDecimal("20.00") : new BigDecimal("10.00");
+        BigDecimal finalAmount = currencyService.calculatePriceInCurrency(totalPln.add(deliveryCost), currency);
 
         redirectAttributes.addFlashAttribute("paidAmount", finalAmount);
-        redirectAttributes.addFlashAttribute("paidCurrency", currencyCode);
+        redirectAttributes.addFlashAttribute("paidCurrency", currency);
 
-        // Zapisujemy zamówienie (to czyści koszyk)
+        // Zapis do bazy
         cartService.saveOrder(orderDto);
+
+        // Wyczyszczenie tymczasowego formularza z sesji
+        sessionStatus.setComplete();
 
         return "redirect:/order/confirmation";
     }
@@ -101,6 +122,7 @@ public class OrderController {
         return "order-confirmation";
     }
 
+    // Metoda pomocnicza
     private void prepareCheckoutModel(Model model, String currency) {
         BigDecimal totalPln = cartService.getTotalSum();
         BigDecimal deliveryPaczkomatPln = new BigDecimal("10.00");
